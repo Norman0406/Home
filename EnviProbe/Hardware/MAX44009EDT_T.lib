@@ -1,0 +1,33 @@
+EESchema-LIBRARY Version 2.3
+#encoding utf-8
+#(c) SnapEDA 2016 (snapeda.com)
+#This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License (CC BY-SA) with Design Exception 1.0
+#
+# MAX44009EDT+T
+#
+DEF MAX44009EDT+T U 0 40 Y Y 1 L N
+F0 "U" -401 421 50 H V L BNN
+F1 "MAX44009EDT+T" -400 -600 50 H V L BNN
+F2 "SON65P200X200X65-7N" 0 0 50 H I L BNN
+F3 "Light to Digital Ambient Light Sensor Digital O/P 0.045lux to 188000lux 6-Pin UTDFN EP T/R" 0 0 50 H I L BNN
+F4 "https://www.digikey.de/product-detail/en/maxim-integrated/MAX44009EDT-T/MAX44009EDT-TCT-ND/2606396?utm_source=snapeda&utm_medium=aggregator&utm_campaign=symbol" 0 0 50 H I L BNN
+F5 "MAX44009EDT+TCT-ND" 0 0 50 H I L BNN
+F6 "Maxim Integrated" 0 0 50 H I L BNN
+F7 "UDFN-6 Maxim Integrated" 0 0 50 H I L BNN
+F8 "MAX44009EDT+T" 0 0 50 H I L BNN
+DRAW
+P 2 0 0 10 -400 400 400 400 N
+P 2 0 0 10 400 400 400 -500 N
+P 2 0 0 10 400 -500 -400 -500 N
+P 2 0 0 10 -400 -500 -400 400 N
+X VCC 1 600 300 200 L 40 40 0 0 W 
+X GND 2 600 -400 200 L 40 40 0 0 W 
+X A0 3 -600 100 200 R 40 40 0 0 I 
+X ~INT~ 4 600 100 200 L 40 40 0 0 O 
+X SCL 5 -600 -100 200 R 40 40 0 0 I C
+X SDA 6 -600 -200 200 R 40 40 0 0 B 
+X EP EP 600 -300 200 L 40 40 0 0 W 
+ENDDRAW
+ENDDEF
+#
+# End Library

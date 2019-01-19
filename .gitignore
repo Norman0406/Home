@@ -7,3 +7,7 @@
 /EnviProbe/Firmware/src/configuration_wireless.inl
 /EnviProbe/Hardware/*-cache.lib
 /EnviProbe/Hardware/*.bak
+/EnviProbe/Hardware/sym-lib-table
+/EnviProbe/Hardware/how-to-import.htm
+/EnviProbe/Hardware/*.dcm
+/EnviProbe/Hardware/*.bck

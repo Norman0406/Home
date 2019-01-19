@@ -1,0 +1,35 @@
+EESchema-LIBRARY Version 2.3
+#encoding utf-8
+#(c) SnapEDA 2016 (snapeda.com)
+#This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License (CC BY-SA) with Design Exception 1.0
+#
+# HTU21D
+#
+DEF HTU21D U 0 40 Y Y 1 L N
+F0 "U" -300 801 50 H V L BNN
+F1 "HTU21D" -301 -902 50 H V L BNN
+F2 "QFN100P300X300X100-7N" 0 0 50 H I L BNN
+F3 "DFN-6 TE Connectivity" 0 0 50 H I L BNN
+F4 "CAT-HSC0004" 0 0 50 H I L BNN
+F5 "HTU21D" 0 0 50 H I L BNN
+F6 "https://www.te.com/usa-en/product-CAT-HSC0004.html?te_bu=Cor&te_type=disp&te_campaign=seda_glo_cor-seda-global-disp-prtnr-fy19-seda-model-bom-cta_sma-317_1&elqCampaignId=32493" 0 0 50 H I L BNN
+F7 "Unavailable" 0 0 50 H I L BNN
+F8 "Temp Sensor Digital Serial _2-Wire, I2C_ 6-Pin DFN" 0 0 50 H I L BNN
+F9 "TE Connectivity" 0 0 50 H I L BNN
+F10 "None" 0 0 50 H I L BNN
+DRAW
+P 2 0 0 10 300 700 300 -700 N
+P 2 0 0 10 300 -700 -300 -700 N
+P 2 0 0 10 -300 -700 -300 700 N
+P 2 0 0 10 -300 700 -100 700 N
+P 2 0 0 10 100 700 300 700 N
+A 0 700 100 1799 3600 0 0 10 N 100 700 -100 700
+X SCK 6 -500 200 200 R 40 40 0 0 I C
+X DATA 1 -500 -300 200 R 40 40 0 0 B 
+X VDD 5 500 500 200 L 40 40 0 0 W 
+X GND 2 500 -600 200 L 40 40 0 0 P 
+X GND PAD 500 -600 200 L 40 40 0 0 P 
+ENDDRAW
+ENDDEF
+#
+# End Library
