@@ -5,3 +5,5 @@
 .vscode/launch.json
 /EnviProbe/Firmware/.vscode
 /EnviProbe/Firmware/src/configuration_wireless.inl
+/EnviProbe/Hardware/*-cache.lib
+/EnviProbe/Hardware/*.bak
