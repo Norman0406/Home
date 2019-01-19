@@ -1,0 +1,5 @@
+namespace envi_probe
+{
+const char* WirelessSsid = "";
+const char* WirelessPassword = "";
+}
