@@ -37,6 +37,10 @@ void setup()
 
     display.begin();
 
+    // turn on voltage to sensors and display
+    pinMode(25, OUTPUT);
+    digitalWrite(25, HIGH);
+
     Serial.begin(9600);
 
     if (config.debugOutput())
@@ -141,6 +145,10 @@ void loop()
         //ESP.restart();
 
         display.end();
+
+        // turn off voltage to sensors and display
+        digitalWrite(25, LOW);
+
         ESP.deepSleep(1);
     }
     else
@@ -165,6 +173,10 @@ void loop()
         Serial.end();
 
         display.end();
+
+        // turn off voltage to sensors and display
+        digitalWrite(25, LOW);
+
         ESP.deepSleep(sleepTime);
     }
 }

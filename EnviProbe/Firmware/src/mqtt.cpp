@@ -53,7 +53,7 @@ void MQTT::connect()
 
 void MQTT::process()
 {
-    delay(200);
+    delay(500);
 }
 
 bool MQTT::isConnected() const
