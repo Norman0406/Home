@@ -73,25 +73,26 @@ void setup()
 
         display.setWifi(true);
 
-        // // get time
-        // WiFiUDP ntpUDP;
-        // NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 3600, 60000);
-        // timeClient.begin();
+        // get time
+        WiFiUDP ntpUDP;
+        NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 3600, 60000);
+        timeClient.begin();
 
-        // int updateAttempts = 3;
-        // while (!timeClient.update()) {
-        //     updateAttempts--;
-        //     delay(200);
-        // }
+        int updateAttempts = 3;
+        while (!timeClient.update())
+        {
+            updateAttempts--;
+            delay(200);
+        }
 
-        // if (updateAttempts == 0)
-        // {
-        //     display.setError(true);
-        // }
-        // else
-        // {
-        //     display.setTime(getFormattedTime(timeClient));
-        // }
+        if (updateAttempts == 0)
+        {
+            display.setError(true);
+        }
+        else
+        {
+            display.setTime(getFormattedTime(timeClient));
+        }
 
         // connect to MQTT
         envi_probe::MQTT mqtt(config);
@@ -144,7 +145,7 @@ void loop()
         // restart() does not properly reset the I2C bus
         //ESP.restart();
 
-        display.end();
+        display.end(false);
 
         // turn off voltage to sensors and display
         digitalWrite(25, LOW);

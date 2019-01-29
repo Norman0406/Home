@@ -8,13 +8,11 @@
 #include "images/wifi.h"
 #include "images/wifi_off.h"
 
-#include <Fonts/FreeMono12pt7b.h>
-#include <Fonts/FreeMono24pt7b.h>
-
-#include <Fonts/FreeMonoBold9pt7b.h>
-#include <Fonts/FreeMonoBold12pt7b.h>
-#include <Fonts/FreeMonoBold18pt7b.h>
-#include <Fonts/FreeMonoBold24pt7b.h>
+#include <Fonts/Org_01.h>               // captions
+#include <Fonts/FreeMonoBold24pt7b.h>   // large values
+#include <Fonts/FreeMono12pt7b.h>       // large units
+#include <Fonts/FreeMonoBold18pt7b.h>   // small values
+#include <Fonts/FreeMono9pt7b.h>        // small units
 
 namespace envi_probe
 {
@@ -40,62 +38,84 @@ void Display::begin()
     m_display->init();
 
     m_display->setTextColor(GxEPD_BLACK);
-    m_display->setRotation(3);
-
-
+    m_display->setRotation(1);
 
     setActive(true);
 }
 
+void Display::drawTime(String time, int x, int y)
+{
+    m_display->setFont(&Org_01);
+    m_display->setCursor(x, y);
+    m_display->println("Time");
+
+    m_display->setFont(&FreeMonoBold24pt7b);
+    m_display->setCursor(x, y + 37);
+    m_display->println(time);
+}
+
+void Display::drawHumidity(float humidity, int x, int y)
+{
+    m_display->setFont(&Org_01);
+    m_display->setCursor(x, y);
+    m_display->println("Humidity");
+
+    m_display->setFont(&FreeMonoBold24pt7b);
+    m_display->setCursor(x, y + 37);
+    m_display->println(humidity, 1);
+
+    m_display->setFont(&FreeMono12pt7b);
+    m_display->setCursor(x + 113, y + 23);
+    m_display->println("%");
+}
+
+void Display::drawTemperature(float temperature, int x, int y)
+{
+    m_display->setFont(&Org_01);
+    m_display->setCursor(x, y);
+    m_display->println("Temperature");
+
+    m_display->setFont(&FreeMonoBold18pt7b);
+    m_display->setCursor(x, y + 30);
+    m_display->println(temperature, 1);
+
+    m_display->setFont(&FreeMono9pt7b);
+    m_display->drawCircle(x + 90, y + 10, 3, GxEPD_BLACK);
+    m_display->setCursor(x + 95, y + 20);
+    m_display->println("C");
+}
+
+void Display::drawPressure(float pressure, int x, int y)
+{
+    m_display->setFont(&Org_01);
+    m_display->setCursor(x, y);
+    m_display->println("Pressure");
+
+    m_display->setFont(&FreeMonoBold18pt7b);
+    m_display->setCursor(x, y + 30);
+    m_display->println((int)pressure);
+
+    int pressurePos = x + 88;
+    if (pressure < 1000)
+    {
+        pressurePos -= 20;
+    }
+
+    m_display->setFont(&FreeMono9pt7b);
+    m_display->setCursor(pressurePos, y + 20);
+    m_display->println("hPa");
+}
+
 void Display::update(Data data)
 {
-    {
-        m_display->setFont(&FreeMonoBold24pt7b);
-
-        // temperature
-        m_display->setCursor(10, 36);
-        m_display->println(data.temperature, 1);
-
-        // humidity
-        m_display->setCursor(10, 78);
-        m_display->println(data.humidity, 1);
-
-        // pressure
-        m_display->setCursor(10, 120);
-        m_display->println(data.pressure, 1);
-    }
-
-    {
-        const auto& font = FreeMono12pt7b;
-        m_display->setFont(&font);
-
-        // temperature
-        m_display->drawCircle(130, 26, 3, GxEPD_BLACK);
-        m_display->setCursor(135, 36);
-        m_display->println("C");
-
-        // humidity
-        m_display->setCursor(125, 78);
-        m_display->println("%");
-
-        // pressure
-        int pressurePos = 183;
-        if (data.pressure < 1000)
-        {
-            pressurePos = 155;
-        }
-        m_display->setCursor(pressurePos, 120);
-        m_display->println("hPa");
-    }
+    drawHumidity(data.humidity, 75, 80);
+    drawTemperature(data.temperature, 10, 140);
+    drawPressure(data.pressure, 135, 140);
 }
 
 void Display::setTime(String time)
 {
-    m_display->setFont(&FreeMonoBold24pt7b);
-
-    // time
-    //m_display->setCursor(10, 50);
-    //m_display->println(time);
+    drawTime(time, 65, 15);
 }
 
 void Display::setWifi(bool wifiOn)
@@ -103,7 +123,7 @@ void Display::setWifi(bool wifiOn)
     if (wifiOn)
     {
         m_display->drawBitmap(
-            m_display->width() - wifi.width - 1,
+            0,
             0,
             wifi.data,
             wifi.width,
@@ -113,7 +133,7 @@ void Display::setWifi(bool wifiOn)
     else
     {
         m_display->drawBitmap(
-            m_display->width() - wifi_off.width - 1,
+            0,
             0,
             wifi_off.data,
             wifi_off.width,
@@ -127,7 +147,7 @@ void Display::setError(bool hasError)
     if (hasError)
     {
         m_display->drawBitmap(
-            m_display->width() - alert.width - 1,
+            0,
             wifi.height,
             alert.data,
             alert.width,
@@ -137,7 +157,7 @@ void Display::setError(bool hasError)
     else
     {
         m_display->fillRect(
-            m_display->width() - alert.width - 1,
+            0,
             wifi.height,
             alert.width,
             alert.height,
@@ -145,10 +165,10 @@ void Display::setError(bool hasError)
     }
 
     m_display->updateWindow(
-        m_display->width() - alert.width - 2,
+        0,
         wifi.height,
-        wifi.width,
-        wifi.height);
+        alert.width,
+        alert.height);
 }
 
 void Display::setActive(bool isActive)
@@ -157,7 +177,7 @@ void Display::setActive(bool isActive)
     {
         m_display->drawBitmap(
             m_display->width() - refresh.width - 1,
-            m_display->height() - refresh.height,
+            0,
             refresh.data,
             refresh.width,
             refresh.height,
@@ -167,7 +187,7 @@ void Display::setActive(bool isActive)
     {
         m_display->fillRect(
             m_display->width() - refresh.width - 1,
-            m_display->height() - refresh.height,
+            0,
             refresh.width,
             refresh.height,
             GxEPD_WHITE);
@@ -175,19 +195,19 @@ void Display::setActive(bool isActive)
 
     m_display->updateWindow(
         m_display->width() - refresh.width - 2,
-        m_display->height() - refresh.height - 1,
+        0,
         refresh.width,
         refresh.height);
 }
 
-void Display::end()
+void Display::end(bool update)
 {
     setActive(false);
 
-    // Screen seems to have a double buffer. Without the second update, a previous image will be
-    // shown on next start up.
-    m_display->update();
-    m_display->update();
+    if (update)
+    {
+        m_display->update();
+    }
 
     m_display->powerDown();
 }

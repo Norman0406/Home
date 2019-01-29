@@ -1,7 +1,7 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
-#include <GxGDEH029A1/GxGDEH029A1.h>      // 2.9" b/w
+#include <GxGDEW027W3/GxGDEW027W3.h>      // 2.7" b/w
 #include <GxIO/GxIO_SPI/GxIO_SPI.h>
 #include <GxIO/GxIO.h>
 
@@ -16,7 +16,7 @@ public:
     virtual ~Display();
 
     void begin();
-    void end();
+    void end(bool update = true);
 
     struct Data
     {
@@ -32,6 +32,10 @@ public:
 
 private:
     void setActive(bool isActive);
+    void drawTime(String time, int x, int y);
+    void drawHumidity(float humidity, int x, int y);
+    void drawTemperature(float temperature, int x, int y);
+    void drawPressure(float pressure, int x, int y);
 
     GxIO_Class* m_io;
     GxEPD_Class* m_display;
