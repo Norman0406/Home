@@ -9,6 +9,7 @@
 #include "images/wifi_off.h"
 
 #include <Fonts/Org_01.h>               // captions
+#include <Fonts/FreeSans9pt7b.h>
 #include <Fonts/FreeMonoBold24pt7b.h>   // large values
 #include <Fonts/FreeMono12pt7b.h>       // large units
 #include <Fonts/FreeMonoBold18pt7b.h>   // small values
@@ -40,7 +41,34 @@ void Display::begin()
     m_display->setTextColor(GxEPD_BLACK);
     m_display->setRotation(1);
 
+    // draw a line
+    int separatorPosition = wifi.height;
+    m_display->drawLine(0, separatorPosition, m_display->width(), separatorPosition, GxEPD_BLACK);
+
     setActive(true);
+}
+
+void Display::setConfig(const Configuration &config)
+{
+    printHeader(config.deviceId().c_str());
+}
+
+void Display::printHeader(String deviceId)
+{
+    m_display->setFont(&FreeSans9pt7b);
+
+    uint16_t textWidth = 0;
+    uint16_t textHeight = 0;
+    {
+        int16_t x1 = 0, y1 = 0;
+        m_display->getTextBounds(deviceId, 0, 0, &x1, &y1, &textWidth, &textHeight);
+    }
+
+    const int xPosition = (m_display->width() / 2) - (textWidth / 2);
+    const int yPosition = (wifi.height / 2) + (textHeight / 2);
+
+    m_display->setCursor(xPosition, yPosition);
+    m_display->println(deviceId);
 }
 
 void Display::drawTime(String time, int x, int y)
@@ -108,14 +136,14 @@ void Display::drawPressure(float pressure, int x, int y)
 
 void Display::update(Data data)
 {
-    drawHumidity(data.humidity, 75, 80);
+    drawHumidity(data.humidity, 75, 87);
     drawTemperature(data.temperature, 10, 140);
     drawPressure(data.pressure, 135, 140);
 }
 
 void Display::setTime(String time)
 {
-    drawTime(time, 65, 15);
+    drawTime(time, 65, 35);
 }
 
 void Display::setWifi(bool wifiOn)
@@ -147,8 +175,8 @@ void Display::setError(bool hasError)
     if (hasError)
     {
         m_display->drawBitmap(
+            wifi.width,
             0,
-            wifi.height,
             alert.data,
             alert.width,
             alert.height,
@@ -157,16 +185,16 @@ void Display::setError(bool hasError)
     else
     {
         m_display->fillRect(
+            wifi.width,
             0,
-            wifi.height,
             alert.width,
             alert.height,
             GxEPD_WHITE);
     }
 
     m_display->updateWindow(
+        wifi.width,
         0,
-        wifi.height,
         alert.width,
         alert.height);
 }

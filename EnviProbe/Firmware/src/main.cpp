@@ -55,6 +55,8 @@ void setup()
         // load configuration
         config.load();
 
+        display.setConfig(config);
+
         // get sensor readings before connecting to wifi, since they may take some time
         envi_probe::Sensors sensors;
         auto sensorData = sensors.getSensorData(config);

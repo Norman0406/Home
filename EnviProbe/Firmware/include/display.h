@@ -25,6 +25,7 @@ public:
         float pressure;
     };
 
+    void setConfig(const Configuration &config);
     void update(Data data);
     void setTime(String time);
     void setWifi(bool wifiOn);
@@ -32,6 +33,7 @@ public:
 
 private:
     void setActive(bool isActive);
+    void printHeader(String deviceId);
     void drawTime(String time, int x, int y);
     void drawHumidity(float humidity, int x, int y);
     void drawTemperature(float temperature, int x, int y);
