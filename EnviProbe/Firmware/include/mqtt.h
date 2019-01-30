@@ -35,7 +35,7 @@ public:
     {
         string topicStr = "environmental/" + m_deviceId + "/" + topic;
         string valueStr = to_string(value);
-        m_mqttClient.publish(topicStr.c_str(), valueStr.c_str());
+        m_mqttClient.publish(topicStr.c_str(), valueStr.c_str(), MQTT_QOS_1);
 
         if (m_debugOutput)
         {
@@ -43,7 +43,6 @@ public:
         }
     }
 
-    void process();
     bool isConnected() const;
 
 private:

@@ -108,8 +108,6 @@ void setup()
         mqtt.publish("illuminance", sensorData.illuminance);
         mqtt.publish("sound", sensorData.soundLevel);
 
-        mqtt.process();
-
         display.setError(false);
     }
     catch (const envi_probe::WifiException &e)
