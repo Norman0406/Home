@@ -1,5 +1,7 @@
-#ifndef WIRELESS_H
-#define WIRELESS_H
+#pragma once
+
+#include <functional>
+#include <esp_event_legacy.h>
 
 namespace envi_probe
 {
@@ -8,10 +10,21 @@ class Configuration;
 class Wireless
 {
 public:
+    using IsConnectedHandler = std::function<void(bool)>;
+
     Wireless();
 
-    void connect(Configuration& config);
+    void begin(Configuration &config);
+    void process();
+    bool isConnected() const;
+
+    void setConnectedHandler(IsConnectedHandler isConnectedHandler);
+
+private:
+    void onConnected(bool isConnected);
+
+    IsConnectedHandler m_isConnectedHandler;
+    bool m_isConnected{false};
+    bool m_debugOutput{false};
 };
 }
-
-#endif // WIRELESS_H

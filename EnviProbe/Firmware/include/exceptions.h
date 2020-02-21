@@ -1,5 +1,4 @@
-#ifndef EXCEPTIONS_H
-#define EXCEPTIONS_H
+#pragma once
 
 #include <exception>
 #include <string>
@@ -12,8 +11,8 @@ class Exception
 public:
     virtual ~Exception() noexcept = default;
 
-     const char* what() const noexcept override;
-     bool restart() const noexcept;
+    const char* what() const noexcept override;
+    bool restart() const noexcept;
 
 protected:
     Exception(std::string message, bool restart = false);
@@ -21,6 +20,13 @@ protected:
 private:
     std::string m_message;
     bool m_restart;
+};
+
+class ConfigException
+    : public Exception
+{
+public:
+    ConfigException(std::string message);
 };
 
 class SensorException
@@ -44,5 +50,3 @@ public:
     NetworkException(std::string message);
 };
 }
-
-#endif // EXCEPTIONS_H

@@ -1,11 +1,13 @@
-#ifndef MQTT_H
-#define MQTT_H
+#pragma once
 
-#include <WiFi.h>
-#include <WiFiClient.h>
+#include "exceptions.h"
+
+#include <unordered_map>
+#include <chrono>
 #include <Arduino.h>
-#include <Adafruit_MQTT.h>
-#include <Adafruit_MQTT_Client.h>
+#include <AsyncMqttClient.h>
+#include <Ticker.h>
+#include <mutex>
 
 namespace envi_probe
 {
@@ -21,6 +23,12 @@ namespace
     {
         return String(value, 8);
     }
+
+    template <>
+    String to_string(uint8_t value)
+    {
+        return String(value);
+    }
 }
 
 class MQTT
@@ -28,32 +36,55 @@ class MQTT
 public:
     using string = String;
 
-    MQTT(const Configuration &config);
+    MQTT();
+    ~MQTT();
 
     template <typename T>
     void publish(string topic, T value)
     {
         string topicStr = "environmental/" + m_deviceId + "/" + topic;
         string valueStr = to_string(value);
-        m_mqttClient.publish(topicStr.c_str(), valueStr.c_str(), MQTT_QOS_1);
 
-        if (m_debugOutput)
+        auto packetId = m_mqttClient.publish(topicStr.c_str(), 1, false, valueStr.c_str());
+
+        if (packetId == 0)
         {
-            Serial.println(topicStr + ": " + valueStr);
+            // not connected
+            throw NetworkException("Could not publish");
+        }
+
+        {
+            std::lock_guard<std::mutex> lock(m_queueMutex);
+            m_queuedPacketIds[packetId] = std::chrono::system_clock::now();
         }
     }
 
+    void begin(const Configuration &config);
+    void connect();
+    void disconnect();
+
     bool isConnected() const;
 
-private:
-    void connect();
+    void setTimeout(std::chrono::milliseconds timeout);
+    void process();
 
+private:
+    void onConnected(bool sessionPresent);
+    void onDisconnected(AsyncMqttClientDisconnectReason reason);
+    void onPublished(uint16_t packetId);
+    static void connectToMqttStatic(MQTT* pThis);
+
+    std::mutex m_queueMutex;
+    std::unordered_map<uint16_t, std::chrono::system_clock::time_point> m_queuedPacketIds;
+    std::chrono::milliseconds m_timeout{std::chrono::seconds(1)};
+    AsyncMqttClient m_mqttClient;
     string m_deviceId;
-    WiFiClient m_client;
-    Adafruit_MQTT_Client m_mqttClient;
     bool m_debugOutput{false};
+    bool m_reconnect{false};
     bool m_connected{false};
+    bool m_debug{false};
+    string m_server;
+    std::uint16_t m_port;
+    Ticker m_reconnectTimer;
 };
 }
-
-#endif // MQTT_H

@@ -20,7 +20,7 @@
 // 0.1.01 - added interrupt code
 // 0.1.00 - initial version
 
-#include <max44009.h>
+#include "max44009.h"
 
 
 Max44009::Max44009(const uint8_t address, const uint8_t dataPin, const uint8_t clockPin)

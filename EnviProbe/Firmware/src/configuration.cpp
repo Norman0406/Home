@@ -1,4 +1,5 @@
-#include <configuration.h>
+#include "configuration.h"
+#include "exceptions.h"
 #include "configuration_wireless.inl"
 
 #include <FS.h>
@@ -26,48 +27,62 @@ void Configuration::load()
 
     if (!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED))
     {
-        Serial.println("SPIFFS Mount Failed");
-        return;
+        throw ConfigException("SPIFFS Mount Failed");
     }
 
     if (SPIFFS.exists("/config.json"))
     {
         File configFile = SPIFFS.open("/config.json", "r");
 
-        if (configFile)
+        if (!configFile)
         {
+            throw ConfigException("Config file could not be opened");
+        }
+
+        if (debugOutput())
+        {
+            Serial.println("opened config file");
+        }
+
+        size_t size = configFile.size();
+
+        // Allocate a buffer to store contents of the file.
+        std::unique_ptr<char[]> buf(new char[size]);
+        size_t bytesRead = configFile.readBytes(buf.get(), size);
+
+        if (bytesRead != size)
+        {
+            throw ConfigException("Could not read config file");
+        }
+
+        DynamicJsonDocument jsonDocument(4192);
+        auto error = deserializeJson(jsonDocument, buf.get());
+
+        if (!error)
+        {
+            JsonObject json = jsonDocument.as<JsonObject>();
+
             if (debugOutput())
             {
-                Serial.println("opened config file");
-            }
-
-            size_t size = configFile.size();
-
-            // Allocate a buffer to store contents of the file.
-            std::unique_ptr<char[]> buf(new char[size]);
-
-            configFile.readBytes(buf.get(), size);
-            DynamicJsonBuffer jsonBuffer;
-            JsonObject &json = jsonBuffer.parseObject(buf.get());
-
-            if (debugOutput())
-            {
-                json.printTo(Serial);
+                serializeJson(jsonDocument, Serial);
                 Serial.println();
             }
 
-            if (json.success())
-            {
-                m_mqttBroker = json["mqtt_broker"].as<const char*>();
-                m_deviceId = json["device_id"].as<const char*>();
-            }
-            else
-            {
-                Serial.println("failed to load json config");
-            }
+            m_mqttBroker = json["mqtt_broker"].as<const char*>();
+            m_deviceId = json["device_id"].as<const char*>();
 
-            configFile.close();
+            JsonArray bsecState = json["bsec_state"].as<JsonArray>();
+            for (auto value : bsecState)
+            {
+                m_bsecState.push_back(value.as<uint8_t>());
+            }
         }
+        else
+        {
+            throw ConfigException("failed to load json configuration");
+        }
+
+        configFile.close();
     }
 }
 
@@ -78,23 +93,29 @@ void Configuration::save()
         Serial.println("saving configuration");
     }
 
-    DynamicJsonBuffer jsonBuffer;
-    JsonObject &json = jsonBuffer.createObject();
-    json["mqtt_broker"] = m_mqttBroker.c_str();
-    json["device_id"] = m_deviceId.c_str();
+    DynamicJsonDocument jsonDocument(4192);
+    jsonDocument["mqtt_broker"] = m_mqttBroker.c_str();
+    jsonDocument["device_id"] = m_deviceId.c_str();
+
+    JsonArray bsecState = jsonDocument["bsec_state"].to<JsonArray>();
+    for (auto value : m_bsecState)
+    {
+        bsecState.add(value);
+    }
 
     File configFile = SPIFFS.open("/config.json", "w");
     if (!configFile)
     {
-        Serial.println("failed to open config file for writing");
+        throw ConfigException("failed to open config file for writing");
     }
 
     if (debugOutput())
     {
-        json.printTo(Serial);
+        serializeJson(jsonDocument, Serial);
+        Serial.println();
     }
 
-    json.printTo(configFile);
+    serializeJson(jsonDocument, configFile);
     configFile.close();
 }
 
@@ -133,9 +154,24 @@ std::string Configuration::wifiPassword() const
     return m_wifiPassword;
 }
 
-int Configuration::sleepTimeSeconds() const
+std::vector<uint8_t>& Configuration::bsecState()
+{
+    return m_bsecState;
+}
+
+int Configuration::sendTimeSeconds() const
 {
     return 30;
+}
+
+int Configuration::displayUpdateTimeSeconds() const
+{
+    return 1;
+}
+
+int Configuration::displayRefreshTimeSeconds() const
+{
+    return 600;
 }
 
 bool Configuration::debugOutput() const

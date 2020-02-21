@@ -18,6 +18,11 @@ bool Exception::restart() const noexcept
     return m_restart;
 }
 
+ConfigException::ConfigException(std::string message)
+    : Exception(std::move(message), true)
+{
+}
+
 SensorException::SensorException(std::string message)
     : Exception(std::move(message), true)
 {

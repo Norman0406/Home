@@ -1,7 +1,7 @@
-#ifndef CONFIGURATION_H
-#define CONFIGURATION_H
+#pragma once
 
 #include <string>
+#include <vector>
 
 namespace envi_probe
 {
@@ -23,7 +23,10 @@ public:
     std::uint16_t mqttPort() const;
     std::string wifiSSID() const;
     std::string wifiPassword() const;
-    int sleepTimeSeconds() const;
+    std::vector<uint8_t>& bsecState();
+    int sendTimeSeconds() const;
+    int displayUpdateTimeSeconds() const;
+    int displayRefreshTimeSeconds() const;
     bool debugOutput() const;
 
     void setDeviceId(std::string deviceId);
@@ -34,7 +37,6 @@ private:
     std::string m_mqttBroker;
     std::string m_wifiSSID;
     std::string m_wifiPassword;
+    std::vector<uint8_t> m_bsecState;
 };
 }
-
-#endif // CONFIGURATION_H

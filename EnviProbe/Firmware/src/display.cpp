@@ -31,8 +31,6 @@ Display::~Display()
 
 void Display::begin()
 {
-    Serial.println("Initializing display");
-
     m_io = new GxIO_Class(SPI, SS, 17, 16);
     m_display = new GxEPD_Class(*m_io, 16, 4);
 
@@ -44,8 +42,7 @@ void Display::begin()
     // draw a line
     int separatorPosition = wifi.height;
     m_display->drawLine(0, separatorPosition, m_display->width(), separatorPosition, GxEPD_BLACK);
-
-    setActive(true);
+    m_display->update();
 }
 
 void Display::setConfig(const Configuration &config)
@@ -69,6 +66,8 @@ void Display::printHeader(String deviceId)
 
     m_display->setCursor(xPosition, yPosition);
     m_display->println(deviceId);
+
+    m_display->updateWindow(0, 0, m_display->width(), wifi.height);
 }
 
 void Display::drawTime(String time, int x, int y)
@@ -136,20 +135,59 @@ void Display::drawPressure(float pressure, int x, int y)
 
 void Display::update(Data data)
 {
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    m_display->fillRect(
+        0,
+        80,
+        m_display->width(),
+        m_display->height() - 81,
+        GxEPD_WHITE);
+
     drawHumidity(data.humidity, 75, 87);
     drawTemperature(data.temperature, 10, 140);
     drawPressure(data.pressure, 135, 140);
+
+    m_display->updateWindow(0, 80, m_display->width(), m_display->height() - 81);
+
+    setTime(data.time);
+}
+
+void Display::refresh()
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_display->update();
 }
 
 void Display::setTime(String time)
 {
+    m_display->fillRect(
+        0,
+        27,
+        m_display->width(),
+        52,
+        GxEPD_WHITE);
+
     drawTime(time, 65, 35);
+
+    m_display->updateWindow(0, 27, m_display->width(), 52);
 }
 
 void Display::setWifi(bool wifiOn)
 {
+    std::lock_guard<std::mutex> lock(m_mutex);
     if (wifiOn)
     {
+        if (!m_wifiOn)
+        {
+            m_display->fillRect(
+                0,
+                0,
+                wifi.width,
+                wifi.height,
+                GxEPD_WHITE);
+        }
+
         m_display->drawBitmap(
             0,
             0,
@@ -168,10 +206,24 @@ void Display::setWifi(bool wifiOn)
             wifi_off.height,
             GxEPD_BLACK);
     }
+
+    m_display->updateWindow(
+        0,
+        0,
+        wifi.width,
+        wifi.height);
+
+    m_wifiOn = wifiOn;
 }
 
 void Display::setError(bool hasError)
 {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (m_hasError == hasError)
+    {
+        return;
+    }
+
     if (hasError)
     {
         m_display->drawBitmap(
@@ -197,41 +249,49 @@ void Display::setError(bool hasError)
         0,
         alert.width,
         alert.height);
+
+    m_hasError = hasError;
 }
 
 void Display::setActive(bool isActive)
 {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (m_isActive == isActive)
+    {
+        return;
+    }
+
     if (isActive)
     {
         m_display->drawBitmap(
-            m_display->width() - refresh.width - 1,
+            m_display->width() - envi_probe::refresh.width - 1,
             0,
-            refresh.data,
-            refresh.width,
-            refresh.height,
+            envi_probe::refresh.data,
+            envi_probe::refresh.width,
+            envi_probe::refresh.height,
             GxEPD_BLACK);
     }
     else
     {
         m_display->fillRect(
-            m_display->width() - refresh.width - 1,
+            m_display->width() - envi_probe::refresh.width - 1,
             0,
-            refresh.width,
-            refresh.height,
+            envi_probe::refresh.width,
+            envi_probe::refresh.height,
             GxEPD_WHITE);
     }
 
     m_display->updateWindow(
-        m_display->width() - refresh.width - 2,
+        m_display->width() - envi_probe::refresh.width - 1,
         0,
-        refresh.width,
-        refresh.height);
+        envi_probe::refresh.width,
+        envi_probe::refresh.height);
+
+    m_isActive = isActive;
 }
 
 void Display::end(bool update)
 {
-    setActive(false);
-
     if (update)
     {
         m_display->update();
