@@ -1,22 +1,21 @@
 #pragma once
 
-#include "configuration.h"
-
 #include <bsec.h>
+
 #include <string>
 #include <vector>
 
-namespace envi_probe
-{
-class BME680
-{
+#include "configuration.h"
+#include "data.h"
+
+namespace envi_probe {
+class BME680 {
 public:
     BME680() = default;
 
-    void begin(Configuration &config);
+    void begin(Configuration &config, envi_probe::Data &data);
 
-    struct Data
-    {
+    struct Data {
         float iaq;
         float rawTemperature;
         float pressure;
@@ -43,15 +42,13 @@ public:
     Data read();
 
 private:
-    void readFromTimer();
-    static void readFromTimerStatic(BME680* pThis);
-    void loadBsecState(Configuration& config);
-    void updateBsecState(Configuration& config);
+    void loadBsecState(envi_probe::Data &config);
+    void updateBsecState(envi_probe::Data &config);
 
     bool m_debugOutput{false};
-    Configuration* m_config{nullptr};
+    envi_probe::Data *m_data{nullptr};
     Bsec m_bsec;
     uint16_t m_stateUpdateCounter;
     int64_t m_nextCall;
 };
-}
+}  // namespace envi_probe

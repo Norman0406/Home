@@ -1,6 +1,6 @@
 #pragma once
 
-#include <SparkFunHTU21D.h>
+#include <ClosedCube_HDC1080.h>
 
 #include <string>
 #include <vector>
@@ -8,22 +8,22 @@
 #include "configuration.h"
 
 namespace envi_probe {
-class HTU21D {
+class HDC1080 {
 public:
-    HTU21D() = default;
+    HDC1080() = default;
 
-    void begin(Configuration &config);
+    void begin(Configuration& config);
 
     struct Data {
-        float temperature;
-        float humidity;
+        double temperature;
+        double humidity;
     };
 
     Data read();
 
 private:
     bool m_debugOutput{false};
-    Configuration *m_config{nullptr};
-    ::HTU21D m_htu21d;
+    Configuration* m_config{nullptr};
+    ClosedCube_HDC1080 m_hdc1080;
 };
 }  // namespace envi_probe

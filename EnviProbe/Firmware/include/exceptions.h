@@ -3,11 +3,8 @@
 #include <exception>
 #include <string>
 
-namespace envi_probe
-{
-class Exception
-    : public std::exception
-{
+namespace envi_probe {
+class Exception : public std::exception {
 public:
     virtual ~Exception() noexcept = default;
 
@@ -22,31 +19,23 @@ private:
     bool m_restart;
 };
 
-class ConfigException
-    : public Exception
-{
+class ConfigException : public Exception {
 public:
     ConfigException(std::string message);
 };
 
-class SensorException
-    : public Exception
-{
+class SensorException : public Exception {
 public:
     SensorException(std::string message);
 };
 
-class WifiException
-    : public Exception
-{
+class WifiException : public Exception {
 public:
     WifiException(std::string message);
 };
 
-class NetworkException
-    : public Exception
-{
+class NetworkException : public Exception {
 public:
     NetworkException(std::string message);
 };
-}
+}  // namespace envi_probe

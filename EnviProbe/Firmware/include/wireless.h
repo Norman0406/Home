@@ -1,14 +1,13 @@
 #pragma once
 
-#include <functional>
 #include <esp_event_legacy.h>
 
-namespace envi_probe
-{
+#include <functional>
+
+namespace envi_probe {
 class Configuration;
 
-class Wireless
-{
+class Wireless {
 public:
     using IsConnectedHandler = std::function<void(bool)>;
 
@@ -27,4 +26,4 @@ private:
     bool m_isConnected{false};
     bool m_debugOutput{false};
 };
-}
+}  // namespace envi_probe

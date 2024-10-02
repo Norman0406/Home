@@ -1,6 +1,6 @@
 #pragma once
 
-#include <SparkFunHTU21D.h>
+#include <Adafruit_BMP280.h>
 
 #include <string>
 #include <vector>
@@ -8,22 +8,22 @@
 #include "configuration.h"
 
 namespace envi_probe {
-class HTU21D {
+class BMP280 {
 public:
-    HTU21D() = default;
+    BMP280() = default;
 
-    void begin(Configuration &config);
+    void begin(Configuration& config);
 
     struct Data {
+        float pressure;
         float temperature;
-        float humidity;
     };
 
     Data read();
 
 private:
     bool m_debugOutput{false};
-    Configuration *m_config{nullptr};
-    ::HTU21D m_htu21d;
+    Configuration* m_config{nullptr};
+    Adafruit_BMP280 m_bmp280;
 };
 }  // namespace envi_probe

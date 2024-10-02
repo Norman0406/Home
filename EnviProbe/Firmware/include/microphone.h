@@ -1,14 +1,12 @@
 #pragma once
 
-#include "configuration.h"
-
 #include <string>
 #include <vector>
 
-namespace envi_probe
-{
-class Microphone
-{
+#include "configuration.h"
+
+namespace envi_probe {
+class Microphone {
 public:
     using Decibels = float;
 
@@ -20,7 +18,7 @@ public:
 
 private:
     bool m_debugOutput{false};
-    Configuration* m_config{nullptr};
+    Configuration *m_config{nullptr};
     uint8_t m_microphone;
 };
-}
+}  // namespace envi_probe

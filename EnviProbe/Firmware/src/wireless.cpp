@@ -1,17 +1,14 @@
 #include "wireless.h"
-#include "exceptions.h"
-#include "configuration.h"
 
 #include <WiFi.h>
 
-namespace envi_probe
-{
-Wireless::Wireless()
-{
-}
+#include "configuration.h"
+#include "exceptions.h"
 
-void Wireless::begin(Configuration &config)
-{
+namespace envi_probe {
+Wireless::Wireless() {}
+
+void Wireless::begin(Configuration &config) {
     m_debugOutput = config.debugOutput();
 
     ::WiFi.disconnect();
@@ -20,29 +17,23 @@ void Wireless::begin(Configuration &config)
     delay(500);
 
     ::WiFi.setAutoReconnect(true);
+
     ::WiFi.begin(config.wifiSSID().c_str(), config.wifiPassword().c_str());
 }
 
-void Wireless::onConnected(bool isConnected)
-{
-    if (m_isConnected == isConnected)
-    {
+void Wireless::onConnected(bool isConnected) {
+    if (m_isConnected == isConnected) {
         return;
     }
 
     m_isConnected = isConnected;
 
-    if (isConnected)
-    {
-        if (m_debugOutput)
-        {
+    if (isConnected) {
+        if (m_debugOutput) {
             Serial.println("Wifi connected to " + WiFi.localIP().toString());
         }
-    }
-    else
-    {
-        if (m_debugOutput)
-        {
+    } else {
+        if (m_debugOutput) {
             Serial.println("Wifi disconnected");
         }
     }
@@ -50,14 +41,12 @@ void Wireless::onConnected(bool isConnected)
     m_isConnectedHandler(isConnected);
 }
 
-void Wireless::process()
-{
+void Wireless::process() {
     wl_status_t status = WiFi.status();
 
     onConnected(status == WL_CONNECTED);
 
-    if (status != WL_CONNECTED)
-    {
+    if (status != WL_CONNECTED) {
         ::WiFi.reconnect();
         status = static_cast<wl_status_t>(::WiFi.waitForConnectResult());
     }
@@ -65,13 +54,10 @@ void Wireless::process()
     onConnected(status == WL_CONNECTED);
 }
 
-bool Wireless::isConnected() const
-{
-    return m_isConnected;
-}
+bool Wireless::isConnected() const { return m_isConnected; }
 
-void Wireless::setConnectedHandler(Wireless::IsConnectedHandler isConnectedHandler)
-{
+void Wireless::setConnectedHandler(
+    Wireless::IsConnectedHandler isConnectedHandler) {
     m_isConnectedHandler = isConnectedHandler;
 }
-} // namespace envi_probe
+}  // namespace envi_probe

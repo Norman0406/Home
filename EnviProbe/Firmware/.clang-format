@@ -1,0 +1,6 @@
+# Use the Google style in this project.
+BasedOnStyle: Google
+
+AccessModifierOffset: -4
+IndentWidth: 4
+Language: Cpp

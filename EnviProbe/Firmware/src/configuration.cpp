@@ -1,46 +1,35 @@
 #include "configuration.h"
-#include "exceptions.h"
-#include "configuration_wireless.inl"
 
+#include <ArduinoJson.h>
 #include <FS.h>
 #include <SPIFFS.h>
-#include <ArduinoJson.h>
+
+#include "exceptions.h"
 
 #define FORMAT_SPIFFS_IF_FAILED true
 
-namespace envi_probe
-{
+namespace envi_probe {
 const int startCountUntilRefresh = 10;
 
-Configuration::Configuration()
-    : m_wifiSSID{WirelessSsid}
-    , m_wifiPassword{WirelessPassword}
-{
-}
+Configuration::Configuration() {}
 
-void Configuration::load()
-{
-    if (debugOutput())
-    {
+void Configuration::load() {
+    if (debugOutput()) {
         Serial.println("loading configuration");
     }
 
-    if (!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED))
-    {
+    if (!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)) {
         throw ConfigException("SPIFFS Mount Failed");
     }
 
-    if (SPIFFS.exists("/config.json"))
-    {
+    if (SPIFFS.exists("/config.json")) {
         File configFile = SPIFFS.open("/config.json", "r");
 
-        if (!configFile)
-        {
+        if (!configFile) {
             throw ConfigException("Config file could not be opened");
         }
 
-        if (debugOutput())
-        {
+        if (debugOutput()) {
             Serial.println("opened config file");
         }
 
@@ -50,35 +39,33 @@ void Configuration::load()
         std::unique_ptr<char[]> buf(new char[size]);
         size_t bytesRead = configFile.readBytes(buf.get(), size);
 
-        if (bytesRead != size)
-        {
+        if (bytesRead != size) {
             throw ConfigException("Could not read config file");
         }
 
         DynamicJsonDocument jsonDocument(4192);
         auto error = deserializeJson(jsonDocument, buf.get());
 
-        if (!error)
-        {
+        if (!error) {
             JsonObject json = jsonDocument.as<JsonObject>();
 
-            if (debugOutput())
-            {
+            if (debugOutput()) {
                 serializeJson(jsonDocument, Serial);
                 Serial.println();
             }
 
-            m_mqttBroker = json["mqtt_broker"].as<const char*>();
-            m_deviceId = json["device_id"].as<const char*>();
-
-            JsonArray bsecState = json["bsec_state"].as<JsonArray>();
-            for (auto value : bsecState)
-            {
-                m_bsecState.push_back(value.as<uint8_t>());
-            }
-        }
-        else
-        {
+            m_mqttBroker = json["mqtt_broker"].as<const char *>();
+            m_mqttPort = json["mqtt_port"].as<std::uint16_t>();
+            m_deviceId = json["device_id"].as<const char *>();
+            m_wifiSSID = json["wifi_ssid"].as<const char *>();
+            m_wifiPassword = json["wifi_password"].as<const char *>();
+            m_sendTimeSeconds = json["send_time_seconds"].as<int>();
+            m_displayUpdateTimeSeconds =
+                json["display_update_time_seconds"].as<int>();
+            m_displayRefreshTimeSeconds =
+                json["display_refresh_time_seconds"].as<int>();
+            m_debugOutput = json["debug_output"].as<bool>();
+        } else {
             throw ConfigException("failed to load json configuration");
         }
 
@@ -86,31 +73,28 @@ void Configuration::load()
     }
 }
 
-void Configuration::save()
-{
-    if (debugOutput())
-    {
+void Configuration::save() {
+    if (debugOutput()) {
         Serial.println("saving configuration");
     }
 
     DynamicJsonDocument jsonDocument(4192);
     jsonDocument["mqtt_broker"] = m_mqttBroker.c_str();
+    jsonDocument["mqtt_port"] = m_mqttPort;
     jsonDocument["device_id"] = m_deviceId.c_str();
-
-    JsonArray bsecState = jsonDocument["bsec_state"].to<JsonArray>();
-    for (auto value : m_bsecState)
-    {
-        bsecState.add(value);
-    }
+    jsonDocument["wifi_ssid"] = m_wifiSSID.c_str();
+    jsonDocument["wifi_password"] = m_wifiPassword.c_str();
+    jsonDocument["send_time_seconds"] = m_sendTimeSeconds;
+    jsonDocument["display_update_time_seconds"] = m_displayUpdateTimeSeconds;
+    jsonDocument["display_refresh_time_seconds"] = m_displayRefreshTimeSeconds;
+    jsonDocument["debug_output"] = m_debugOutput;
 
     File configFile = SPIFFS.open("/config.json", "w");
-    if (!configFile)
-    {
+    if (!configFile) {
         throw ConfigException("failed to open config file for writing");
     }
 
-    if (debugOutput())
-    {
+    if (debugOutput()) {
         serializeJson(jsonDocument, Serial);
         Serial.println();
     }
@@ -119,73 +103,29 @@ void Configuration::save()
     configFile.close();
 }
 
-uint8_t Configuration::led() const
-{
-    return LED_BUILTIN;
+uint8_t Configuration::led() const { return LED_BUILTIN; }
+
+uint8_t Configuration::microphone() const { return A0; }
+
+std::string Configuration::deviceId() const { return m_deviceId; }
+
+std::string Configuration::mqttBroker() const { return m_mqttBroker; }
+
+std::uint16_t Configuration::mqttPort() const { return m_mqttPort; }
+
+std::string Configuration::wifiSSID() const { return m_wifiSSID; }
+
+std::string Configuration::wifiPassword() const { return m_wifiPassword; }
+
+int Configuration::sendTimeSeconds() const { return m_sendTimeSeconds; }
+
+int Configuration::displayUpdateTimeSeconds() const {
+    return m_displayUpdateTimeSeconds;
 }
 
-uint8_t Configuration::microphone() const
-{
-    return A0;
+int Configuration::displayRefreshTimeSeconds() const {
+    return m_displayRefreshTimeSeconds;
 }
 
-std::string Configuration::deviceId() const
-{
-    return m_deviceId;
-}
-
-std::string Configuration::mqttBroker() const
-{
-    return m_mqttBroker;
-}
-
-std::uint16_t Configuration::mqttPort() const
-{
-    return 1883;
-}
-
-std::string Configuration::wifiSSID() const
-{
-    return m_wifiSSID;
-}
-
-std::string Configuration::wifiPassword() const
-{
-    return m_wifiPassword;
-}
-
-std::vector<uint8_t>& Configuration::bsecState()
-{
-    return m_bsecState;
-}
-
-int Configuration::sendTimeSeconds() const
-{
-    return 30;
-}
-
-int Configuration::displayUpdateTimeSeconds() const
-{
-    return 1;
-}
-
-int Configuration::displayRefreshTimeSeconds() const
-{
-    return 600;
-}
-
-bool Configuration::debugOutput() const
-{
-    return true;
-}
-
-void Configuration::setDeviceId(std::string deviceId)
-{
-    m_deviceId = deviceId;
-}
-
-void Configuration::setMqttBroker(std::string mqttBroker)
-{
-    m_mqttBroker = mqttBroker;
-}
-}
+bool Configuration::debugOutput() const { return m_debugOutput; }
+}  // namespace envi_probe

@@ -1,12 +1,11 @@
 #include "microphone.h"
-#include "exceptions.h"
 
 #include <Arduino.h>
 
-namespace envi_probe
-{
-void Microphone::begin(Configuration &config)
-{
+#include "exceptions.h"
+
+namespace envi_probe {
+void Microphone::begin(Configuration &config) {
     m_config = &config;
 
     m_debugOutput = config.debugOutput();
@@ -16,8 +15,7 @@ void Microphone::begin(Configuration &config)
     analogReadResolution(12);
 }
 
-Microphone::Decibels Microphone::read() const
-{
+Microphone::Decibels Microphone::read() const {
     const int resolution = 4096;
     const float systemVoltage = 3.3f;
 
@@ -35,9 +33,11 @@ Microphone::Decibels Microphone::read() const
     do {
         int audioValue = analogRead(m_microphone);
 
-        audioValue = (audioValue - (resolution / 2));  // subtract the dc offset to center the signal at 0
-        audioValue *= audioValue;               // square the value to remove negative values
-        sumOfSquares += audioValue;         // sum the values
+        audioValue = (audioValue -
+                      (resolution /
+                       2));  // subtract the dc offset to center the signal at 0
+        audioValue *= audioValue;  // square the value to remove negative values
+        sumOfSquares += audioValue;  // sum the values
         numSamples++;
     } while (millis() - beginTime < timeFrame);
 
@@ -53,4 +53,4 @@ Microphone::Decibels Microphone::read() const
 
     return db;
 }
-}
+}  // namespace envi_probe

@@ -1,16 +1,15 @@
 #pragma once
 
-#include <GxGDEW027W3/GxGDEW027W3.h>      // 2.7" b/w
-#include <GxIO/GxIO_SPI/GxIO_SPI.h>
+#include <GxGDEW027W3/GxGDEW027W3.h>  // 2.7" b/w
 #include <GxIO/GxIO.h>
+#include <GxIO/GxIO_SPI/GxIO_SPI.h>
+
 #include <mutex>
 
-namespace envi_probe
-{
+namespace envi_probe {
 class Configuration;
 
-class Display
-{
+class Display {
 public:
     Display();
     virtual ~Display();
@@ -18,8 +17,7 @@ public:
     void begin();
     void end(bool update = true);
 
-    struct Data
-    {
+    struct Data {
         String time;
         float temperature;
         float humidity;
@@ -27,7 +25,7 @@ public:
     };
 
     void refresh();
-    void setConfig(const Configuration &config);
+    void setConfig(const Configuration& config);
     void update(Data data);
     void setActive(bool isActive);
     void setWifi(bool wifiOn);
@@ -49,4 +47,4 @@ private:
     bool m_wifiOn{false};
     bool m_hasError{false};
 };
-}
+}  // namespace envi_probe

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <max44009/max44009.h>
+#include <ClosedCube_SHT31D.h>
 
 #include <string>
 #include <vector>
@@ -8,19 +8,22 @@
 #include "configuration.h"
 
 namespace envi_probe {
-class Max44009 {
+class SHT35D {
 public:
-    using Illuminance = float;
-
-    Max44009() = default;
+    SHT35D() = default;
 
     void begin(Configuration &config);
 
-    Illuminance read();
+    struct Data {
+        float temperature;
+        float humidity;
+    };
+
+    Data read();
 
 private:
     bool m_debugOutput{false};
     Configuration *m_config{nullptr};
-    ::Max44009 m_max44009{0x4A};
+    ClosedCube_SHT31D m_sht35d;
 };
 }  // namespace envi_probe

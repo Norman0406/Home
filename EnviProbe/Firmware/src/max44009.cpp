@@ -1,25 +1,22 @@
 #include "max44009.h"
+
 #include "exceptions.h"
 
-namespace envi_probe
-{
-void Max44009::begin(Configuration &config)
-{
+namespace envi_probe {
+void Max44009::begin(Configuration &config) {
     m_config = &config;
 
     m_debugOutput = config.debugOutput();
 }
 
-Max44009::Illuminance Max44009::read(int iterations)
-{
+Max44009::Illuminance Max44009::read() {
     float illuminance = m_max44009.getLux();
 
     int error = m_max44009.getError();
-    if (error != 0)
-    {
+    if (error != 0) {
         throw SensorException("Could not access Max44009");
     }
 
     return illuminance;
 }
-}
+}  // namespace envi_probe

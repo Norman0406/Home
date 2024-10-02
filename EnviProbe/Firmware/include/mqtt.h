@@ -1,38 +1,39 @@
 #pragma once
 
-#include "exceptions.h"
-
-#include <unordered_map>
-#include <chrono>
 #include <Arduino.h>
 #include <AsyncMqttClient.h>
 #include <Ticker.h>
-#include <mutex>
 
-namespace envi_probe
-{
+#include <chrono>
+#include <mutex>
+#include <unordered_map>
+
+#include "exceptions.h"
+
+namespace envi_probe {
 class Configuration;
 
-namespace
-{
-    template <typename T>
-    String to_string(T value);
+namespace {
+template <typename T>
+String to_string(T value);
 
-    template <>
-    String to_string(float value)
-    {
-        return String(value, 8);
-    }
-
-    template <>
-    String to_string(uint8_t value)
-    {
-        return String(value);
-    }
+template <>
+String to_string(float value) {
+    return String(value, 8);
 }
 
-class MQTT
-{
+template <>
+String to_string(double value) {
+    return String(value, 8);
+}
+
+template <>
+String to_string(uint8_t value) {
+    return String(value);
+}
+}  // namespace
+
+class MQTT {
 public:
     using string = String;
 
@@ -40,17 +41,20 @@ public:
     ~MQTT();
 
     template <typename T>
-    void publish(string topic, T value)
-    {
+    void publish(string topic, T value) {
         string topicStr = "environmental/" + m_deviceId + "/" + topic;
         string valueStr = to_string(value);
 
-        auto packetId = m_mqttClient.publish(topicStr.c_str(), 1, false, valueStr.c_str());
+        auto packetId =
+            m_mqttClient.publish(topicStr.c_str(), 1, false, valueStr.c_str());
 
-        if (packetId == 0)
-        {
+        if (packetId == 0) {
             // not connected
             throw NetworkException("Could not publish");
+        }
+
+        if (m_debugOutput) {
+            Serial.println("Published " + topicStr + ": " + valueStr);
         }
 
         {
@@ -72,10 +76,11 @@ private:
     void onConnected(bool sessionPresent);
     void onDisconnected(AsyncMqttClientDisconnectReason reason);
     void onPublished(uint16_t packetId);
-    static void connectToMqttStatic(MQTT* pThis);
+    static void connectToMqttStatic(MQTT *pThis);
 
     std::mutex m_queueMutex;
-    std::unordered_map<uint16_t, std::chrono::system_clock::time_point> m_queuedPacketIds;
+    std::unordered_map<uint16_t, std::chrono::system_clock::time_point>
+        m_queuedPacketIds;
     std::chrono::milliseconds m_timeout{std::chrono::seconds(1)};
     AsyncMqttClient m_mqttClient;
     string m_deviceId;
@@ -87,4 +92,4 @@ private:
     std::uint16_t m_port;
     Ticker m_reconnectTimer;
 };
-}
+}  // namespace envi_probe
