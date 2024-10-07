@@ -1,11 +1,27 @@
 {
-    "device_id": "wohnzimmer",
-    "mqtt_broker": "192.168.1.10",
-    "mqtt_port": 1883,
-    "wifi_ssid": "",
-    "wifi_password": "",
-    "send_time_seconds": 30,
-    "display_update_time_seconds": 1,
-    "display_refresh_time_seconds": 600,
-    "debug_output": true
+    "device_id": "",
+    "debug_output": true,
+    "wifi": {
+        "ssid": "",
+        "password": ""
+    },
+    "mqtt": {
+        "broker_ip": "192.168.1.10",
+        "broker_port": 1883,
+        "send_time_seconds": 15
+    },
+    "display": {
+        "update_time_seconds": 1,
+        "refresh_time_seconds": 600
+    }
+    "sensors": {
+        "bme680": {},
+        "bmp280": {},
+        "sht35d": {},
+        "htu21d": {},
+        "max44009": {},
+        "microphone": {
+            "pin": 36
+        }
+    }
 }

@@ -54,17 +54,53 @@ void Configuration::load() {
                 Serial.println();
             }
 
-            m_mqttBroker = json["mqtt_broker"].as<const char *>();
-            m_mqttPort = json["mqtt_port"].as<std::uint16_t>();
-            m_deviceId = json["device_id"].as<const char *>();
-            m_wifiSSID = json["wifi_ssid"].as<const char *>();
-            m_wifiPassword = json["wifi_password"].as<const char *>();
-            m_sendTimeSeconds = json["send_time_seconds"].as<int>();
-            m_displayUpdateTimeSeconds =
-                json["display_update_time_seconds"].as<int>();
-            m_displayRefreshTimeSeconds =
-                json["display_refresh_time_seconds"].as<int>();
+            // general data
+            m_deviceId = json["device_id"].as<const char*>();
             m_debugOutput = json["debug_output"].as<bool>();
+
+            // MQTT
+            m_mqtt.brokerIp = json["mqtt"]["broker_ip"].as<const char*>();
+            m_mqtt.brokerPort = json["mqtt"]["broker_port"].as<std::uint16_t>();
+            m_mqtt.sendTimeSeconds =
+                json["mqtt"]["send_time_seconds"].as<int>();
+
+            // WiFi
+            m_wifi.ssid = json["wifi"]["ssid"].as<const char*>();
+            m_wifi.password = json["wifi"]["password"].as<const char*>();
+
+            if (json.containsKey("display")) {
+                m_display = Display{};
+                m_display->updateTimeSeconds =
+                    json["display"]["update_time_seconds"].as<int>();
+                m_display->refreshTimeSeconds =
+                    json["display"]["refresh_time_seconds"].as<int>();
+            }
+
+            if (json["sensors"].containsKey("bme680")) {
+                m_bme680 = BME680{};
+            }
+
+            if (json["sensors"].containsKey("bmp280")) {
+                m_bmp280 = BMP280{};
+            }
+
+            if (json["sensors"].containsKey("sht35d")) {
+                m_sht35d = SHT35D{};
+            }
+
+            if (json["sensors"].containsKey("htu21d")) {
+                m_htu21d = HTU21D{};
+            }
+
+            if (json["sensors"].containsKey("max44009")) {
+                m_max44009 = Max44009{};
+            }
+
+            if (json["sensors"].containsKey("microphone")) {
+                m_microphone = Microphone{};
+                m_microphone->pin =
+                    json["sensors"]["microphone"]["pin"].as<uint8_t>();
+            }
         } else {
             throw ConfigException("failed to load json configuration");
         }
@@ -79,15 +115,46 @@ void Configuration::save() {
     }
 
     DynamicJsonDocument jsonDocument(4192);
-    jsonDocument["mqtt_broker"] = m_mqttBroker.c_str();
-    jsonDocument["mqtt_port"] = m_mqttPort;
     jsonDocument["device_id"] = m_deviceId.c_str();
-    jsonDocument["wifi_ssid"] = m_wifiSSID.c_str();
-    jsonDocument["wifi_password"] = m_wifiPassword.c_str();
-    jsonDocument["send_time_seconds"] = m_sendTimeSeconds;
-    jsonDocument["display_update_time_seconds"] = m_displayUpdateTimeSeconds;
-    jsonDocument["display_refresh_time_seconds"] = m_displayRefreshTimeSeconds;
     jsonDocument["debug_output"] = m_debugOutput;
+
+    jsonDocument["mqtt"]["broker"] = m_mqtt.brokerIp.c_str();
+    jsonDocument["mqtt"]["port"] = m_mqtt.brokerPort;
+    jsonDocument["mqtt"]["send_time_seconds"] = m_mqtt.sendTimeSeconds;
+
+    jsonDocument["wifi"]["ssid"] = m_wifi.ssid.c_str();
+    jsonDocument["wifi"]["password"] = m_wifi.password.c_str();
+
+    if (m_display) {
+        jsonDocument["display"]["update_time_seconds"] =
+            m_display->updateTimeSeconds;
+        jsonDocument["display"]["refresh_time_seconds"] =
+            m_display->refreshTimeSeconds;
+    }
+
+    if (m_bme680) {
+        jsonDocument["sensors"].getOrAddMember("bme680");
+    }
+
+    if (m_bmp280) {
+        jsonDocument["sensors"].getOrAddMember("bmp280");
+    }
+
+    if (m_sht35d) {
+        jsonDocument["sensors"].getOrAddMember("sht35d");
+    }
+
+    if (m_htu21d) {
+        jsonDocument["sensors"].getOrAddMember("htu21d");
+    }
+
+    if (m_max44009) {
+        jsonDocument["sensors"].getOrAddMember("max44009");
+    }
+
+    if (m_microphone) {
+        jsonDocument["sensors"]["microphone"]["pin"] = m_microphone->pin;
+    }
 
     File configFile = SPIFFS.open("/config.json", "w");
     if (!configFile) {
@@ -105,27 +172,40 @@ void Configuration::save() {
 
 uint8_t Configuration::led() const { return LED_BUILTIN; }
 
-uint8_t Configuration::microphone() const { return A0; }
-
 std::string Configuration::deviceId() const { return m_deviceId; }
 
-std::string Configuration::mqttBroker() const { return m_mqttBroker; }
-
-std::uint16_t Configuration::mqttPort() const { return m_mqttPort; }
-
-std::string Configuration::wifiSSID() const { return m_wifiSSID; }
-
-std::string Configuration::wifiPassword() const { return m_wifiPassword; }
-
-int Configuration::sendTimeSeconds() const { return m_sendTimeSeconds; }
-
-int Configuration::displayUpdateTimeSeconds() const {
-    return m_displayUpdateTimeSeconds;
-}
-
-int Configuration::displayRefreshTimeSeconds() const {
-    return m_displayRefreshTimeSeconds;
-}
-
 bool Configuration::debugOutput() const { return m_debugOutput; }
+
+const Configuration::WiFi& Configuration::wifi() const { return m_wifi; }
+
+const Configuration::MQTT& Configuration::mqtt() const { return m_mqtt; }
+
+const std::optional<Configuration::Display>& Configuration::display() const {
+    return m_display;
+}
+
+const std::optional<Configuration::BME680>& Configuration::bme680() const {
+    return m_bme680;
+}
+
+const std::optional<Configuration::BMP280>& Configuration::bmp280() const {
+    return m_bmp280;
+}
+
+const std::optional<Configuration::SHT35D>& Configuration::sht35d() const {
+    return m_sht35d;
+}
+
+const std::optional<Configuration::HTU21D>& Configuration::htu21d() const {
+    return m_htu21d;
+}
+
+const std::optional<Configuration::Max44009>& Configuration::max44009() const {
+    return m_max44009;
+}
+
+const std::optional<Configuration::Microphone>& Configuration::microphone()
+    const {
+    return m_microphone;
+}
 }  // namespace envi_probe

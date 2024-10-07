@@ -24,13 +24,13 @@ MQTT::~MQTT() {
 void MQTT::begin(const Configuration& config) {
     m_deviceId = String(config.deviceId().c_str());
     m_debugOutput = config.debugOutput();
-    m_server = String(config.mqttBroker().c_str());
-    m_port = config.mqttPort();
+    m_server = String(config.mqtt().brokerIp.c_str());
+    m_port = config.mqtt().brokerPort;
 
     IPAddress ipAddress;
-    ipAddress.fromString(config.mqttBroker().c_str());
+    ipAddress.fromString(config.mqtt().brokerIp.c_str());
 
-    m_mqttClient.setServer(ipAddress, config.mqttPort());
+    m_mqttClient.setServer(ipAddress, config.mqtt().brokerPort);
 }
 
 void MQTT::connect() {

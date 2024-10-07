@@ -31,6 +31,11 @@ template <>
 String to_string(uint8_t value) {
     return String(value);
 }
+
+template <>
+String to_string(int value) {
+    return String(value);
+}
 }  // namespace
 
 class MQTT {

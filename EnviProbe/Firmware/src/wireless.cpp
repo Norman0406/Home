@@ -18,7 +18,7 @@ void Wireless::begin(Configuration &config) {
 
     ::WiFi.setAutoReconnect(true);
 
-    ::WiFi.begin(config.wifiSSID().c_str(), config.wifiPassword().c_str());
+    ::WiFi.begin(config.wifi().ssid.c_str(), config.wifi().password.c_str());
 }
 
 void Wireless::onConnected(bool isConnected) {
