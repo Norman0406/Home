@@ -42,7 +42,7 @@ void Data::load() {
             throw ConfigException("Could not read data file");
         }
 
-        DynamicJsonDocument jsonDocument(4192);
+        JsonDocument jsonDocument;
         auto error = deserializeJson(jsonDocument, buf.get());
 
         if (!error) {
@@ -70,7 +70,7 @@ void Data::save() {
         Serial.println("saving configuration");
     }
 
-    DynamicJsonDocument jsonDocument(4192);
+    JsonDocument jsonDocument;
 
     JsonArray bsecState = jsonDocument["bsec_state"].to<JsonArray>();
     for (auto value : m_bsecState) {

@@ -43,7 +43,7 @@ void Configuration::load() {
             throw ConfigException("Could not read config file");
         }
 
-        DynamicJsonDocument jsonDocument(4192);
+        JsonDocument jsonDocument;
         auto error = deserializeJson(jsonDocument, buf.get());
 
         if (!error) {
@@ -114,7 +114,7 @@ void Configuration::save() {
         Serial.println("saving configuration");
     }
 
-    DynamicJsonDocument jsonDocument(4192);
+    JsonDocument jsonDocument;
     jsonDocument["device_id"] = m_deviceId.c_str();
     jsonDocument["debug_output"] = m_debugOutput;
 
@@ -133,23 +133,23 @@ void Configuration::save() {
     }
 
     if (m_bme680) {
-        jsonDocument["sensors"].getOrAddMember("bme680");
+        jsonDocument["sensors"]["bme680"] = JsonObject();
     }
 
     if (m_bmp280) {
-        jsonDocument["sensors"].getOrAddMember("bmp280");
+        jsonDocument["sensors"]["bmp280"] = JsonObject();
     }
 
     if (m_sht35d) {
-        jsonDocument["sensors"].getOrAddMember("sht35d");
+        jsonDocument["sensors"]["sht35d"] = JsonObject();
     }
 
     if (m_htu21d) {
-        jsonDocument["sensors"].getOrAddMember("htu21d");
+        jsonDocument["sensors"]["htu21d"] = JsonObject();
     }
 
     if (m_max44009) {
-        jsonDocument["sensors"].getOrAddMember("max44009");
+        jsonDocument["sensors"]["max44009"] = JsonObject();
     }
 
     if (m_microphone) {
