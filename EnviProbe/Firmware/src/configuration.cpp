@@ -68,7 +68,7 @@ void Configuration::load() {
             m_wifi.ssid = json["wifi"]["ssid"].as<const char*>();
             m_wifi.password = json["wifi"]["password"].as<const char*>();
 
-            if (json.containsKey("display")) {
+            if (json["display"].is<JsonObject>()) {
                 m_display = Display{};
                 m_display->updateTimeSeconds =
                     json["display"]["update_time_seconds"].as<int>();
@@ -76,27 +76,27 @@ void Configuration::load() {
                     json["display"]["refresh_time_seconds"].as<int>();
             }
 
-            if (json["sensors"].containsKey("bme680")) {
+            if (json["sensors"]["bme680"].is<JsonObject>()) {
                 m_bme680 = BME680{};
             }
 
-            if (json["sensors"].containsKey("bmp280")) {
+            if (json["sensors"]["bmp280"].is<JsonObject>()) {
                 m_bmp280 = BMP280{};
             }
 
-            if (json["sensors"].containsKey("sht35d")) {
+            if (json["sensors"]["sht35d"].is<JsonObject>()) {
                 m_sht35d = SHT35D{};
             }
 
-            if (json["sensors"].containsKey("htu21d")) {
+            if (json["sensors"]["htu21d"].is<JsonObject>()) {
                 m_htu21d = HTU21D{};
             }
 
-            if (json["sensors"].containsKey("max44009")) {
+            if (json["sensors"]["max44009"].is<JsonObject>()) {
                 m_max44009 = Max44009{};
             }
 
-            if (json["sensors"].containsKey("microphone")) {
+            if (json["sensors"]["microphone"].is<JsonObject>()) {
                 m_microphone = Microphone{};
                 m_microphone->pin =
                     json["sensors"]["microphone"]["pin"].as<uint8_t>();
