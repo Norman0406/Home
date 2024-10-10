@@ -313,7 +313,6 @@ void loop() {
             mqtt.publish("bme680/co2Equivalent", bme680Data.co2Equivalent);
             mqtt.publish("bme680/breathVocEquivalent",
                          bme680Data.breathVocEquivalent);
-            mqtt.publish("bme680/compGasValue", bme680Data.compGasValue);
             mqtt.publish("bme680/gasPercentage", bme680Data.gasPercentage);
             mqtt.publish("bme680/iaqAccuracy", bme680Data.iaqAccuracy);
             mqtt.publish("bme680/staticIaqAccuracy",
@@ -321,7 +320,6 @@ void loop() {
             mqtt.publish("bme680/co2Accuracy", bme680Data.co2Accuracy);
             mqtt.publish("bme680/breathVocAccuracy",
                          bme680Data.breathVocAccuracy);
-            mqtt.publish("bme680/compGasAccuracy", bme680Data.compGasAccuracy);
             mqtt.publish("bme680/gasPercentageAcccuracy",
                          bme680Data.gasPercentageAcccuracy);
 #endif
