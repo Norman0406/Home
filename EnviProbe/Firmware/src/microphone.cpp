@@ -12,7 +12,7 @@ void Microphone::begin(Configuration& config) {
 
     m_debugOutput = config.debugOutput();
 
-    m_microphone = config.microphone()->pin;
+    m_microphone = A0;
 
     analogReadResolution(12);
 

@@ -14,14 +14,4 @@
         "update_time_seconds": 1,
         "refresh_time_seconds": 600
     }
-    "sensors": {
-        "bme680": {},
-        "bmp280": {},
-        "sht35d": {},
-        "htu21d": {},
-        "max44009": {},
-        "microphone": {
-            "pin": 36
-        }
-    }
 }

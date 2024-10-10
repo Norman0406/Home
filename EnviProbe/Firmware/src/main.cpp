@@ -262,10 +262,9 @@ void loop() {
         sht35dData = sht35d.read();
 
         // compute temperature offset for BME680
-        if (config.bme680()) {
-            temperatureOffset =
-                bme680Data.rawTemperature - sht35dData.temperature;
-        }
+#ifdef HAS_BME680
+        temperatureOffset = bme680Data.rawTemperature - sht35dData.temperature;
+#endif
 
         if (config.display()) {
             std::lock_guard<std::mutex> lock(dataMutex);
