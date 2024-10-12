@@ -7,8 +7,14 @@
 // #include "hdc1080.h"
 // #include "si7021.h"
 
+#include <Wire.h>
+
 #include <functional>
 #include <thread>
+
+#ifdef HAS_LED
+#define LED_PIN 21
+#endif
 
 #ifdef HAS_DISPLAY
 #include "display.h"
@@ -92,7 +98,7 @@ void process() {
 #ifdef HAS_DISPLAY
         // don't update display too frequently
         unsigned long timeSinceLastUpdate = millis() - lastDisplayUpdate;
-        if (timeSinceLastUpdate > config.display()->updateTimeSeconds * 1e3) {
+        if (timeSinceLastUpdate > config.display().updateTimeSeconds * 1e3) {
             struct tm timeInfo;
             if (wireless.isConnected() && !getLocalTime(&timeInfo)) {
                 error = true;
@@ -109,7 +115,7 @@ void process() {
 
         // completely refresh the display from time to time
         unsigned long timeSinceLastRefresh = millis() - lastRefreshTime;
-        if (timeSinceLastRefresh > config.display()->refreshTimeSeconds * 1e3) {
+        if (timeSinceLastRefresh > config.display().refreshTimeSeconds * 1e3) {
             display.refresh();
             lastRefreshTime = millis();
         }
@@ -120,6 +126,13 @@ void process() {
 }
 
 void setup() {
+    // Allow some time for the serial monitor to connect
+    delay(1000);
+
+#ifdef HAS_LED
+    neopixelWrite(LED_PIN, 0, 0, 255);
+#endif
+
 #ifdef HAS_DISPLAY
     // turn on voltage to sensors and display
     pinMode(25, OUTPUT);
@@ -127,6 +140,8 @@ void setup() {
 #endif
 
     Serial.begin(9600);
+
+    Wire.setPins(I2C_SDA, I2C_SCL);
 
     if (config.debugOutput()) {
         Serial.println();
@@ -227,12 +242,22 @@ void setup() {
 #endif
     } catch (const envi_probe::Exception &e) {
         Serial.println("Exception: " + String(e.what()));
+
+#ifdef HAS_LED
+        neopixelWrite(LED_PIN, 0, 255, 0);
+#endif
+
 #ifdef HAS_DISPLAY
         display.setError(true);
 #endif
+
         delay(1000);
         ESP.restart();
     }
+
+#ifdef HAS_LED
+    neopixelWrite(LED_PIN, 0, 0, 0);
+#endif
 }
 
 #ifdef HAS_BME680
@@ -246,10 +271,12 @@ void loop() {
         bme680.setTemperatureOffset(temperatureOffset);
         auto bme680Data = bme680.read();
 
-        if (config.display()) {
+#ifdef HAS_DISPLAY
+        {
             std::lock_guard<std::mutex> lock(dataMutex);
             displayData.pressure = bme680Data.pressure / 100.0f;
         }
+#endif
 #endif
 
 #ifdef HAS_BMP280
@@ -266,11 +293,13 @@ void loop() {
         temperatureOffset = bme680Data.rawTemperature - sht35dData.temperature;
 #endif
 
-        if (config.display()) {
+#ifdef HAS_DISPLAY
+        {
             std::lock_guard<std::mutex> lock(dataMutex);
             displayData.temperature = sht35dData.temperature;
             displayData.humidity = sht35dData.humidity;
         }
+#endif
 #endif
 
 #ifdef HAS_HTU21D
@@ -295,6 +324,14 @@ void loop() {
         unsigned long timeSinceLastSend = millis() - lastSendTime;
         if (timeSinceLastSend > config.mqtt().sendTimeSeconds * 1e3 &&
             wireless.isConnected() && mqtt.isConnected()) {
+            if (config.debugOutput()) {
+                Serial.println("Publishing data");
+            }
+
+#ifdef HAS_LED
+            neopixelWrite(LED_PIN, 255, 0, 0);
+#endif
+
 #ifdef HAS_DISPLAY
             display.setActive(true);
 #endif
@@ -365,16 +402,34 @@ void loop() {
             lastSendTime = millis();
         }
     } catch (const envi_probe::Exception &e) {
-#ifdef HAS_DISPLAY
-        display.setError(true);
-#endif
         Serial.println("Exception: " + String(e.what()));
-    } catch (...) {
+
+#ifdef HAS_LED
+        neopixelWrite(LED_PIN, 0, 255, 0);
+#endif
+
 #ifdef HAS_DISPLAY
         display.setError(true);
 #endif
+
+        delay(1000);
+    } catch (...) {
         Serial.println("Unknown exception");
+
+#ifdef HAS_LED
+        neopixelWrite(LED_PIN, 0, 255, 0);
+#endif
+
+#ifdef HAS_DISPLAY
+        display.setError(true);
+#endif
+        delay(1000);
     }
+
+#ifdef HAS_LED
+    neopixelWrite(LED_PIN, 0, 0, 0);
+    delay(10);
+#endif
 
 #ifdef HAS_DISPLAY
     // may still be on if exception during mqtt publishing
