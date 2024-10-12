@@ -53,10 +53,12 @@ void Data::load() {
                 Serial.println();
             }
 
+#ifdef HAS_BME680
             JsonArray bsecState = json["bsec_state"].as<JsonArray>();
             for (auto value : bsecState) {
                 m_bsecState.push_back(value.as<uint8_t>());
             }
+#endif
         } else {
             throw ConfigException("failed to load json configuration");
         }
@@ -72,10 +74,12 @@ void Data::save() {
 
     JsonDocument jsonDocument;
 
+#ifdef HAS_BME680
     JsonArray bsecState = jsonDocument["bsec_state"].to<JsonArray>();
     for (auto value : m_bsecState) {
         bsecState.add(value);
     }
+#endif
 
     File dataFile = SPIFFS.open("/data.json", "w");
     if (!dataFile) {
@@ -91,5 +95,7 @@ void Data::save() {
     dataFile.close();
 }
 
+#ifdef HAS_BME680
 std::vector<uint8_t> &Data::bsecState() { return m_bsecState; }
+#endif
 }  // namespace envi_probe
