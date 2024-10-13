@@ -148,7 +148,7 @@ void Configuration::save() {
         Serial.println("Saving configuration");
     }
 
-    JsonDocument jsonDocument;
+    JsonDocument jsonDocument = JsonObject();
     jsonDocument["device_id"] = m_deviceId.c_str();
     jsonDocument["debug_output"] = m_debugOutput;
 

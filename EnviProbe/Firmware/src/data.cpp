@@ -14,65 +14,72 @@ Data::Data(const Configuration &config) : m_config{config} {}
 
 void Data::load() {
     if (m_config.debugOutput()) {
-        Serial.println("loading data");
+        Serial.println("Loading data");
     }
 
     if (!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)) {
         throw ConfigException("SPIFFS Mount Failed");
     }
 
-    if (SPIFFS.exists("/data.json")) {
-        File dataFile = SPIFFS.open("/data.json", "r");
+    if (!SPIFFS.exists("/data.json")) {
+        save();
+        ESP.restart();
+    }
 
-        if (!dataFile) {
-            throw ConfigException("Data file could not be opened");
-        }
+    File dataFile = SPIFFS.open("/data.json", "r");
+
+    if (!dataFile) {
+        throw ConfigException("Data file could not be opened");
+    }
+
+    if (m_config.debugOutput()) {
+        Serial.println("Opened data file");
+    }
+
+    size_t size = dataFile.size();
+
+    // Allocate a buffer to store contents of the file.
+    std::unique_ptr<char[]> buf(new char[size]);
+    size_t bytesRead = dataFile.readBytes(buf.get(), size);
+
+    if (bytesRead != size) {
+        throw ConfigException("Could not read data file");
+    }
+
+    JsonDocument jsonDocument;
+    auto error = deserializeJson(jsonDocument, buf.get());
+
+    if (!error) {
+        JsonObject json = jsonDocument.as<JsonObject>();
 
         if (m_config.debugOutput()) {
-            Serial.println("opened data file");
+            serializeJson(jsonDocument, Serial);
+            Serial.println();
         }
-
-        size_t size = dataFile.size();
-
-        // Allocate a buffer to store contents of the file.
-        std::unique_ptr<char[]> buf(new char[size]);
-        size_t bytesRead = dataFile.readBytes(buf.get(), size);
-
-        if (bytesRead != size) {
-            throw ConfigException("Could not read data file");
-        }
-
-        JsonDocument jsonDocument;
-        auto error = deserializeJson(jsonDocument, buf.get());
-
-        if (!error) {
-            JsonObject json = jsonDocument.as<JsonObject>();
-
-            if (m_config.debugOutput()) {
-                serializeJson(jsonDocument, Serial);
-                Serial.println();
-            }
 
 #ifdef HAS_BME680
-            JsonArray bsecState = json["bsec_state"].as<JsonArray>();
-            for (auto value : bsecState) {
-                m_bsecState.push_back(value.as<uint8_t>());
-            }
-#endif
-        } else {
-            throw ConfigException("failed to load json configuration");
+        JsonArray bsecState = json["bsec_state"].as<JsonArray>();
+        for (auto value : bsecState) {
+            m_bsecState.push_back(value.as<uint8_t>());
         }
+#endif
+    } else {
+        throw ConfigException("Failed to load json configuration");
+    }
 
-        dataFile.close();
+    dataFile.close();
+
+    if (m_config.debugOutput()) {
+        Serial.println("Data loaded");
     }
 }
 
 void Data::save() {
     if (m_config.debugOutput()) {
-        Serial.println("saving configuration");
+        Serial.println("Saving data");
     }
 
-    JsonDocument jsonDocument;
+    JsonDocument jsonDocument = JsonObject();
 
 #ifdef HAS_BME680
     JsonArray bsecState = jsonDocument["bsec_state"].to<JsonArray>();
@@ -83,7 +90,7 @@ void Data::save() {
 
     File dataFile = SPIFFS.open("/data.json", "w");
     if (!dataFile) {
-        throw ConfigException("failed to open data file for writing");
+        throw ConfigException("Failed to open data file for writing");
     }
 
     if (m_config.debugOutput()) {
@@ -93,6 +100,10 @@ void Data::save() {
 
     serializeJson(jsonDocument, dataFile);
     dataFile.close();
+
+    if (m_config.debugOutput()) {
+        Serial.println("Data saved");
+    }
 }
 
 #ifdef HAS_BME680

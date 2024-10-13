@@ -7,6 +7,7 @@
 // #include "hdc1080.h"
 // #include "si7021.h"
 
+#include <SPIFFS.h>
 #include <Wire.h>
 
 #include <functional>
@@ -15,6 +16,9 @@
 #ifdef HAS_LED
 #define LED_PIN 21
 #endif
+
+#define BOOT_BUTTON 0
+const unsigned long longPressSec = 2;
 
 #ifdef HAS_DISPLAY
 #include "display.h"
@@ -125,9 +129,62 @@ void process() {
     }
 }
 
+void bootBtnReleased();
+
+unsigned long bootBtnPressedTime = 0;
+bool resetRequested = false;
+
+void bootBtnPressed() {
+    // listen to another button press
+    attachInterrupt(digitalPinToInterrupt(BOOT_BUTTON), bootBtnReleased,
+                    RISING);
+
+    Serial.println("Boot button pressed. Long press (> " +
+                   String(longPressSec) + "s) for reset.");
+
+    // capture current time
+    bootBtnPressedTime = millis();
+}
+
+void bootBtnReleased() {
+    // attach another interrupt on button release
+    attachInterrupt(digitalPinToInterrupt(BOOT_BUTTON), bootBtnPressed,
+                    FALLING);
+
+    Serial.println("Boot button released");
+
+    unsigned long bootBtnReleasedTime = millis();
+
+    // if it was a long button press, format internal storage and restart
+    if (bootBtnReleasedTime - bootBtnPressedTime > longPressSec * 1e3) {
+        resetRequested = true;
+        std::thread([] {
+            neopixelWrite(LED_PIN, 0, 255, 0);
+            Serial.println("Formatting storage");
+            SPIFFS.format();
+            Serial.println("Formatting complete");
+            neopixelWrite(LED_PIN, 0, 0, 0);
+            ESP.restart();
+        }).detach();
+    }
+}
+
+void setupBootButton() {
+    pinMode(BOOT_BUTTON, INPUT);
+
+    // configure the boot button to format the internal storage on a long button
+    // press
+    attachInterrupt(digitalPinToInterrupt(BOOT_BUTTON), bootBtnPressed,
+                    FALLING);
+}
+
 void setup() {
+    Serial.begin(9600);
+
     // Allow some time for the serial monitor to connect
     delay(1000);
+
+    setupBootButton();
 
 #ifdef HAS_LED
     neopixelWrite(LED_PIN, 0, 0, 255);
@@ -138,8 +195,6 @@ void setup() {
     pinMode(25, OUTPUT);
     digitalWrite(25, HIGH);
 #endif
-
-    Serial.begin(9600);
 
     Wire.setPins(I2C_SDA, I2C_SCL);
 
@@ -266,6 +321,10 @@ float temperatureOffset = 0;
 
 void loop() {
     try {
+        if (resetRequested) {
+            return;
+        }
+
 #ifdef HAS_BME680
         // set temperature offset to make BME680 readings more accurate
         bme680.setTemperatureOffset(temperatureOffset);
