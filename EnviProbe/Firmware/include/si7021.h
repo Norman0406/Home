@@ -8,9 +8,9 @@
 #include "configuration.h"
 
 namespace envi_probe {
-class Si7021 {
+class SI7021 {
 public:
-    Si7021() = default;
+    SI7021() = default;
 
     void begin(Configuration &config);
 

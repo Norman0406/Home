@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ClosedCube_SHT31D.h>
+#include <arduino-sht.h>
 
 #include <string>
 #include <vector>
@@ -8,9 +8,9 @@
 #include "configuration.h"
 
 namespace envi_probe {
-class SHT35D {
+class SHT {
 public:
-    SHT35D() = default;
+    SHT() = default;
 
     void begin(Configuration &config);
 
@@ -23,7 +23,6 @@ public:
 
 private:
     bool m_debugOutput{false};
-    Configuration *m_config{nullptr};
-    ClosedCube_SHT31D m_sht35d;
+    SHTSensor m_sht;
 };
 }  // namespace envi_probe

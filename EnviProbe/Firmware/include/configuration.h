@@ -12,11 +12,12 @@ public:
 
     void load();
     void save();
+    void clear();
 
     struct MQTT {
         std::string brokerIp{"192.168.1.10"};
         std::uint16_t brokerPort{1883};
-        int sendTimeSeconds{30};
+        int sendTimeSeconds{15};
     };
 
     struct Display {
@@ -34,6 +35,7 @@ public:
 #endif
 
 private:
+    const std::string m_configFile{"/config.json"};
     std::string m_apName;
     std::string m_deviceId{"envi_probe"};
     bool m_debugOutput{true};

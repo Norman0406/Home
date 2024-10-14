@@ -12,13 +12,16 @@ public:
 
     void load();
     void save();
+    void clear();
 
 #ifdef HAS_BME680
     std::vector<uint8_t> &bsecState();
 #endif
 
 private:
+    const std::string m_dataFile{"/data.json"};
     const Configuration &m_config;
+
 #ifdef HAS_BME680
     std::vector<uint8_t> m_bsecState;
 #endif

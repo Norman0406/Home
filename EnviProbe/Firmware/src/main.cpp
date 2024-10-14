@@ -13,20 +13,16 @@
 #include <functional>
 #include <thread>
 
-#ifdef HAS_LED
-#define LED_PIN 21
-#endif
-
 #define BOOT_BUTTON 0
 const unsigned long longPressSec = 2;
+const unsigned long veryLongPressSec = 15;
 
 #ifdef HAS_DISPLAY
 #include "display.h"
 #endif
 
-#ifdef HAS_HTU21D
-#include "htu21d.h"
-envi_probe::HTU21D htu21d;
+#ifdef HAS_LED
+#define LED_PIN 21
 #endif
 
 #ifdef HAS_BME680
@@ -39,9 +35,24 @@ envi_probe::BME680 bme680;
 envi_probe::BMP280 bmp280;
 #endif
 
-#ifdef HAS_SHT35D
-#include "sht35d.h"
-envi_probe::SHT35D sht35d;
+#ifdef HAS_HTU21D
+#include "htu21d.h"
+envi_probe::HTU21D htu21d;
+#endif
+
+#ifdef HAS_SI7021
+#include "si7021.h"
+envi_probe::SI7021 si7021;
+#endif
+
+#ifdef HAS_HDC1080
+#include "hdc1080.h"
+envi_probe::HDC1080 hdc1080;
+#endif
+
+#ifdef HAS_SHT
+#include "sht.h"
+envi_probe::SHT sht;
 #endif
 
 #ifdef HAS_MAX44009
@@ -83,8 +94,6 @@ envi_probe::Configuration config;
 envi_probe::Data data{config};
 envi_probe::Wireless wireless;
 envi_probe::MQTT mqtt;
-// envi_probe::HDC1080 hdc1080;
-// envi_probe::Si7021 si7021;
 
 std::thread processThread;
 
@@ -139,8 +148,9 @@ void bootBtnPressed() {
     attachInterrupt(digitalPinToInterrupt(BOOT_BUTTON), bootBtnReleased,
                     RISING);
 
-    Serial.println("Boot button pressed. Long press (> " +
-                   String(longPressSec) + "s) for reset.");
+    Serial.println("Boot button pressed. Press >" + String(longPressSec) +
+                   "s for config reset, >" + String(veryLongPressSec) +
+                   "s for config and data reset.");
 
     // capture current time
     bootBtnPressedTime = millis();
@@ -154,16 +164,25 @@ void bootBtnReleased() {
     Serial.println("Boot button released");
 
     unsigned long bootBtnReleasedTime = millis();
+    auto pressDuration = bootBtnReleasedTime - bootBtnPressedTime;
 
-    // if it was a long button press, format internal storage and restart
-    if (bootBtnReleasedTime - bootBtnPressedTime > longPressSec * 1e3) {
+    // if it was a long button press, clear configuration and data
+    if (pressDuration > longPressSec * 1e3) {
         resetRequested = true;
-        std::thread([] {
+        std::thread([pressDuration, config{std::reference_wrapper(config)},
+                     data{std::reference_wrapper(data)}]() mutable {
+#ifdef HAS_LED
             neopixelWrite(LED_PIN, 0, 255, 0);
-            Serial.println("Formatting storage");
-            SPIFFS.format();
-            Serial.println("Formatting complete");
+#endif
+            // clear config on normal long press
+            config.get().clear();
+            if (pressDuration > veryLongPressSec * 1e3) {
+                // clear data on very long press
+                data.get().clear();
+            }
+#ifdef HAS_LED
             neopixelWrite(LED_PIN, 0, 0, 0);
+#endif
             ESP.restart();
         }).detach();
     }
@@ -179,21 +198,21 @@ void setupBootButton() {
 }
 
 void setup() {
-    Serial.begin(9600);
+    Serial.begin(115200);
 
     // Allow some time for the serial monitor to connect
     delay(1000);
 
     setupBootButton();
 
-#ifdef HAS_LED
-    neopixelWrite(LED_PIN, 0, 0, 255);
-#endif
-
 #ifdef HAS_DISPLAY
     // turn on voltage to sensors and display
     pinMode(25, OUTPUT);
     digitalWrite(25, HIGH);
+#endif
+
+#ifdef HAS_LED
+    neopixelWrite(LED_PIN, 0, 0, 255);
 #endif
 
     Wire.setPins(I2C_SDA, I2C_SCL);
@@ -263,12 +282,20 @@ void setup() {
         bmp280.begin(config);
 #endif
 
-#ifdef HAS_SHT35D
-        sht35d.begin(config);
-#endif
-
 #ifdef HAS_HTU21D
         htu21d.begin(config);
+#endif
+
+#ifdef HAS_SI7021
+        si7021.begin(config);
+#endif
+
+#ifdef HAS_HDC1080
+        hdc1080.begin(config);
+#endif
+
+#ifdef HAS_SHT
+        sht.begin(config);
 #endif
 
 #ifdef HAS_MAX44009
@@ -278,9 +305,6 @@ void setup() {
 #ifdef HAS_MICROPHONE
         microphone.begin(config);
 #endif
-
-        // hdc1080.begin(config);
-        // si7021.begin(config);
 
         // sensors are sensitive to timing, so everything that may change timing
         // happens in a different thread
@@ -343,20 +367,20 @@ void loop() {
         bmp280Data = bmp280.read();
 #endif
 
-#ifdef HAS_SHT35D
-        envi_probe::SHT35D::Data sht35dData;
-        sht35dData = sht35d.read();
+#ifdef HAS_SHT
+        envi_probe::SHT::Data shtData;
+        shtData = sht.read();
 
         // compute temperature offset for BME680
 #ifdef HAS_BME680
-        temperatureOffset = bme680Data.rawTemperature - sht35dData.temperature;
+        temperatureOffset = bme680Data.rawTemperature - shtData.temperature;
 #endif
 
 #ifdef HAS_DISPLAY
         {
             std::lock_guard<std::mutex> lock(dataMutex);
-            displayData.temperature = sht35dData.temperature;
-            displayData.humidity = sht35dData.humidity;
+            displayData.temperature = shtData.temperature;
+            displayData.humidity = shtData.humidity;
         }
 #endif
 #endif
@@ -364,6 +388,16 @@ void loop() {
 #ifdef HAS_HTU21D
         envi_probe::HTU21D::Data htu21dData;
         htu21dData = htu21d.read();
+#endif
+
+#ifdef HAS_SI7021
+        envi_probe::SI7021::Data si7021Data;
+        si7021Data = si7021.read();
+#endif
+
+#ifdef HAS_HDC1080
+        envi_probe::HDC1080::Data hdc1080Data;
+        hdc1080Data = hdc1080.read();
 #endif
 
 #ifdef HAS_MAX44009
@@ -375,9 +409,6 @@ void loop() {
         envi_probe::Microphone::Data microphoneData;
         microphoneData = microphone.read();
 #endif
-
-        // auto hdc1080Data = m_hdc1080.read();
-        // auto si7021Data = m_si7021.read();
 
         // send data out every now and then
         unsigned long timeSinceLastSend = millis() - lastSendTime;
@@ -425,14 +456,24 @@ void loop() {
             mqtt.publish("bmp280/pressure", bmp280Data.pressure / 100.0f);
 #endif
 
-#ifdef HAS_SHT35D
-            mqtt.publish("sht35d/temperature", sht35dData.temperature);
-            mqtt.publish("sht35d/humidity", sht35dData.humidity);
-#endif
-
 #ifdef HAS_HTU21D
             mqtt.publish("htu21d/temperature", htu21dData.temperature);
             mqtt.publish("htu21d/humidity", htu21dData.humidity);
+#endif
+
+#ifdef HAS_SI7021
+            mqtt.publish("si7021/temperature", si7021Data.temperature);
+            mqtt.publish("si7021/humidity", si7021Data.humidity);
+#endif
+
+#ifdef HAS_HDC1080
+            mqtt.publish("hdc1080/temperature", hdc1080Data.temperature);
+            mqtt.publish("hdc1080/humidity", hdc1080Data.humidity);
+#endif
+
+#ifdef HAS_SHT
+            mqtt.publish("sht/temperature", shtData.temperature);
+            mqtt.publish("sht/humidity", shtData.humidity);
 #endif
 
 #ifdef HAS_MAX44009
@@ -445,14 +486,6 @@ void loop() {
                 mqtt.publish("microphone/peak", microphoneData.peak);
             }
 #endif
-
-            // HDC1080
-            // mqtt.publish("hdc1080/temperature", hdc1080Data.temperature);
-            // mqtt.publish("hdc1080/humidity", hdc1080Data.humidity);
-
-            // Si7021
-            // mqtt.publish("si7021/temperature", si7021Data.temperature);
-            // mqtt.publish("si7021/humidity", si7021Data.humidity);
 
 #ifdef HAS_DISPLAY
             display.setActive(false);

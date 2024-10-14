@@ -58,11 +58,11 @@ void Configuration::load() {
             throw ConfigException("SPIFFS Mount Failed");
         }
 
-        if (!SPIFFS.exists("/config.json")) {
+        if (!SPIFFS.exists(m_configFile.c_str())) {
             throw ConfigException("Configuration file does not exist");
         }
 
-        File configFile = SPIFFS.open("/config.json", "r");
+        File configFile = SPIFFS.open(m_configFile.c_str(), "r");
 
         if (!configFile) {
             throw ConfigException("Config file could not be opened");
@@ -163,7 +163,7 @@ void Configuration::save() {
         m_display.refreshTimeSeconds;
 #endif
 
-    File configFile = SPIFFS.open("/config.json", "w");
+    File configFile = SPIFFS.open(m_configFile.c_str(), "w");
     if (!configFile) {
         throw ConfigException("Failed to open config file for writing");
     }
@@ -175,6 +175,15 @@ void Configuration::save() {
 
     serializeJson(jsonDocument, configFile);
     configFile.close();
+}
+
+void Configuration::clear() {
+    Serial.println("Clearing configuration");
+
+    SPIFFS.remove(m_configFile.c_str());
+    m_wifiManager.resetSettings();
+
+    Serial.println("Configuration cleared");
 }
 
 uint8_t Configuration::led() const { return LED_BUILTIN; }

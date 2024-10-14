@@ -26,7 +26,7 @@ void Data::load() {
         ESP.restart();
     }
 
-    File dataFile = SPIFFS.open("/data.json", "r");
+    File dataFile = SPIFFS.open(m_dataFile.c_str(), "r");
 
     if (!dataFile) {
         throw ConfigException("Data file could not be opened");
@@ -88,7 +88,7 @@ void Data::save() {
     }
 #endif
 
-    File dataFile = SPIFFS.open("/data.json", "w");
+    File dataFile = SPIFFS.open(m_dataFile.c_str(), "w");
     if (!dataFile) {
         throw ConfigException("Failed to open data file for writing");
     }
@@ -104,6 +104,14 @@ void Data::save() {
     if (m_config.debugOutput()) {
         Serial.println("Data saved");
     }
+}
+
+void Data::clear() {
+    Serial.println("Clearing data");
+
+    SPIFFS.remove(m_dataFile.c_str());
+
+    Serial.println("Data cleared");
 }
 
 #ifdef HAS_BME680
