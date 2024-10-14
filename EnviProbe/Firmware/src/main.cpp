@@ -1,17 +1,13 @@
+#include <Wire.h>
+
+#include <functional>
+#include <thread>
+
 #include "configuration.h"
 #include "data.h"
 #include "exceptions.h"
 #include "mqtt.h"
 #include "wireless.h"
-
-// #include "hdc1080.h"
-// #include "si7021.h"
-
-#include <SPIFFS.h>
-#include <Wire.h>
-
-#include <functional>
-#include <thread>
 
 #define BOOT_BUTTON 0
 const unsigned long longPressSec = 2;
@@ -21,8 +17,12 @@ const unsigned long veryLongPressSec = 15;
 #include "display.h"
 #endif
 
-#ifdef HAS_LED
+#ifdef HAS_NEOPIXEL_LED
 #define LED_PIN 21
+#endif
+
+#ifdef HAS_LED
+#define LED_PIN 2
 #endif
 
 #ifdef HAS_BME680
@@ -172,6 +172,9 @@ void bootBtnReleased() {
         std::thread([pressDuration, config{std::reference_wrapper(config)},
                      data{std::reference_wrapper(data)}]() mutable {
 #ifdef HAS_LED
+            digitalWrite(LED_PIN, HIGH);
+#endif
+#ifdef HAS_NEOPIXEL_LED
             neopixelWrite(LED_PIN, 0, 255, 0);
 #endif
             // clear config on normal long press
@@ -181,6 +184,9 @@ void bootBtnReleased() {
                 data.get().clear();
             }
 #ifdef HAS_LED
+            digitalWrite(LED_PIN, LOW);
+#endif
+#ifdef HAS_NEOPIXEL_LED
             neopixelWrite(LED_PIN, 0, 0, 0);
 #endif
             ESP.restart();
@@ -212,6 +218,13 @@ void setup() {
 #endif
 
 #ifdef HAS_LED
+    pinMode(LED_PIN, OUTPUT);
+    digitalWrite(LED_PIN, HIGH);
+#endif
+
+    delay(5000);
+
+#ifdef HAS_NEOPIXEL_LED
     neopixelWrite(LED_PIN, 0, 0, 255);
 #endif
 
@@ -322,7 +335,7 @@ void setup() {
     } catch (const envi_probe::Exception &e) {
         Serial.println("Exception: " + String(e.what()));
 
-#ifdef HAS_LED
+#ifdef HAS_NEOPIXEL_LED
         neopixelWrite(LED_PIN, 0, 255, 0);
 #endif
 
@@ -335,6 +348,10 @@ void setup() {
     }
 
 #ifdef HAS_LED
+    digitalWrite(LED_PIN, LOW);
+#endif
+
+#ifdef HAS_NEOPIXEL_LED
     neopixelWrite(LED_PIN, 0, 0, 0);
 #endif
 }
@@ -419,6 +436,10 @@ void loop() {
             }
 
 #ifdef HAS_LED
+            digitalWrite(LED_PIN, HIGH);
+#endif
+
+#ifdef HAS_NEOPIXEL_LED
             neopixelWrite(LED_PIN, 255, 0, 0);
 #endif
 
@@ -496,7 +517,7 @@ void loop() {
     } catch (const envi_probe::Exception &e) {
         Serial.println("Exception: " + String(e.what()));
 
-#ifdef HAS_LED
+#ifdef HAS_NEOPIXEL_LED
         neopixelWrite(LED_PIN, 0, 255, 0);
 #endif
 
@@ -508,7 +529,7 @@ void loop() {
     } catch (...) {
         Serial.println("Unknown exception");
 
-#ifdef HAS_LED
+#ifdef HAS_NEOPIXEL_LED
         neopixelWrite(LED_PIN, 0, 255, 0);
 #endif
 
@@ -519,6 +540,10 @@ void loop() {
     }
 
 #ifdef HAS_LED
+    digitalWrite(LED_PIN, LOW);
+#endif
+
+#ifdef HAS_NEOPIXEL_LED
     neopixelWrite(LED_PIN, 0, 0, 0);
     delay(10);
 #endif
