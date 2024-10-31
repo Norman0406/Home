@@ -427,6 +427,30 @@ void loop() {
         microphoneData = microphone.read();
 #endif
 
+#ifdef HAS_LED
+        if (!wireless.isConnected() || !mqtt.isConnected()) {
+            digitalWrite(LED_PIN, HIGH);
+        } else {
+            digitalWrite(LED_PIN, LOW);
+        }
+#endif
+
+#ifdef HAS_NEOPIXEL_LED
+        uint8_t red = 0;
+        uint8_t green = 0;
+        uint8_t blue = 0;
+
+        if (!wireless.isConnected()) {
+            red = 255;
+            green = 255;
+        } else if (!mqtt.isConnected()) {
+            red = 255;
+            blue = 255;
+        }
+
+        neopixelWrite(LED_PIN, green, red, blue);
+#endif
+
         // send data out every now and then
         unsigned long timeSinceLastSend = millis() - lastSendTime;
         if (timeSinceLastSend > config.mqtt().sendTimeSeconds * 1e3 &&
@@ -440,7 +464,7 @@ void loop() {
 #endif
 
 #ifdef HAS_NEOPIXEL_LED
-            neopixelWrite(LED_PIN, 255, 0, 0);
+            neopixelWrite(LED_PIN, 50, 0, 0);
 #endif
 
 #ifdef HAS_DISPLAY
