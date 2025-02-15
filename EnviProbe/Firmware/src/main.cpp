@@ -247,7 +247,7 @@ void setup() {
 
     // configure watchdog timer
     Serial.println("Configuring watchdog timer with a timeout of " +
-                   String(WDT_TIMEOUT_SEC));
+                   String(WDT_TIMEOUT_SEC) + " seconds");
     esp_task_wdt_init(WDT_TIMEOUT_SEC, true);  // enable panic so ESP32 restarts
     esp_task_wdt_add(NULL);  // add current thread to WDT watch
 
