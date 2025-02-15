@@ -1,4 +1,5 @@
 #include <Wire.h>
+#include <esp_task_wdt.h>
 
 #include <functional>
 #include <thread>
@@ -10,8 +11,9 @@
 #include "wireless.h"
 
 #define BOOT_BUTTON 0
-const unsigned long longPressSec = 2;
-const unsigned long veryLongPressSec = 15;
+const unsigned long LONG_PRESS_SEC = 2;
+const unsigned long VERY_LONG_PRESS_SEC = 15;
+const unsigned int WDT_TIMEOUT_SEC = 10;
 
 #ifdef HAS_DISPLAY
 #include "display.h"
@@ -148,8 +150,8 @@ void bootBtnPressed() {
     attachInterrupt(digitalPinToInterrupt(BOOT_BUTTON), bootBtnReleased,
                     RISING);
 
-    Serial.println("Boot button pressed. Press >" + String(longPressSec) +
-                   "s for config reset, >" + String(veryLongPressSec) +
+    Serial.println("Boot button pressed. Press >" + String(LONG_PRESS_SEC) +
+                   "s for config reset, >" + String(VERY_LONG_PRESS_SEC) +
                    "s for config and data reset.");
 
     // capture current time
@@ -167,7 +169,7 @@ void bootBtnReleased() {
     auto pressDuration = bootBtnReleasedTime - bootBtnPressedTime;
 
     // if it was a long button press, clear configuration and data
-    if (pressDuration > longPressSec * 1e3) {
+    if (pressDuration > LONG_PRESS_SEC * 1e3) {
         resetRequested = true;
         std::thread([pressDuration, config{std::reference_wrapper(config)},
                      data{std::reference_wrapper(data)}]() mutable {
@@ -179,7 +181,7 @@ void bootBtnReleased() {
 #endif
             // clear config on normal long press
             config.get().clear();
-            if (pressDuration > veryLongPressSec * 1e3) {
+            if (pressDuration > VERY_LONG_PRESS_SEC * 1e3) {
                 // clear data on very long press
                 data.get().clear();
             }
@@ -242,6 +244,12 @@ void setup() {
                        " kb");
         Serial.println("===============================================");
     }
+
+    // configure watchdog timer
+    Serial.println("Configuring watchdog timer with a timeout of " +
+                   String(WDT_TIMEOUT_SEC));
+    esp_task_wdt_init(WDT_TIMEOUT_SEC, true);  // enable panic so ESP32 restarts
+    esp_task_wdt_add(NULL);  // add current thread to WDT watch
 
     try {
 #ifdef HAS_DISPLAY
@@ -365,6 +373,8 @@ void loop() {
         if (resetRequested) {
             return;
         }
+
+        esp_task_wdt_reset();
 
 #ifdef HAS_BME680
         // set temperature offset to make BME680 readings more accurate
@@ -569,7 +579,7 @@ void loop() {
 
 #ifdef HAS_NEOPIXEL_LED
     neopixelWrite(LED_PIN, 0, 0, 0);
-    delay(10);
+    delay(20);
 #endif
 
 #ifdef HAS_DISPLAY
