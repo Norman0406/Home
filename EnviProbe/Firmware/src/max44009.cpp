@@ -8,7 +8,7 @@ void Max44009::begin(Configuration &config) {
 
     m_config = &config;
 
-    log_i("Max440909 initialized")
+    log_i("Max440909 initialized");
 }
 
 Max44009::Illuminance Max44009::read() {
