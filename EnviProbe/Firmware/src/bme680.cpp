@@ -67,7 +67,7 @@ void BME680::begin(Configuration &config, envi_probe::Data &data) {
 }
 
 void BME680::setTemperatureOffset(float offset) {
-    log_i("Setting temperature offset to %d°", offset);
+    log_d("Setting temperature offset to %d°", offset);
     m_bsec.setTemperatureOffset(offset);
 }
 

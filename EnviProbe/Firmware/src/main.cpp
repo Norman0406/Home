@@ -461,7 +461,7 @@ void loop() {
         unsigned long timeSinceLastSend = millis() - lastSendTime;
         if (timeSinceLastSend > config.mqtt().sendTimeSeconds * 1e3 &&
             wireless.isConnected() && mqtt.isConnected()) {
-            log_i("Publishing data");
+            log_d("Publishing data");
 
 #ifdef HAS_LED
             digitalWrite(LED_PIN, HIGH);
