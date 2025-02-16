@@ -20,6 +20,7 @@ void HDC1080::begin(Configuration &config) {
 }
 
 HDC1080::Data HDC1080::read() {
+    log_d("Reading data");
     return {m_hdc1080.readTemperature(), m_hdc1080.readHumidity()};
 }
 }  // namespace envi_probe

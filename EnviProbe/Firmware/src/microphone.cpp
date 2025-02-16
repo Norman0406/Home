@@ -65,6 +65,7 @@ void Microphone::processThread() {
 }
 
 Microphone::Data Microphone::read() {
+    log_d("Reading data");
     if (m_numSamples <= 0) {
         return {false, 0, 0};
     }

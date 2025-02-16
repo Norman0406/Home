@@ -14,6 +14,7 @@ void HTU21D::begin(Configuration &config) {
 }
 
 HTU21D::Data HTU21D::read() {
+    log_d("Reading data");
     return {m_htu21d.readTemperature(), m_htu21d.readHumidity()};
 }
 }  // namespace envi_probe

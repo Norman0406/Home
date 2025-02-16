@@ -16,6 +16,7 @@ void SHT::begin(Configuration &config) {
 }
 
 SHT::Data SHT::read() {
+    log_d("Reading data");
     if (!m_sht.readSample()) {
         throw SensorException("Could not read SHT sample");
     }

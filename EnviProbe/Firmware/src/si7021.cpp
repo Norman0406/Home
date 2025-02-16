@@ -22,6 +22,7 @@ void SI7021::begin(Configuration &config) {
 }
 
 SI7021::Data SI7021::read() {
+    log_d("Reading data");
     return {m_si7021.readTemperature(), m_si7021.readHumidity()};
 }
 }  // namespace envi_probe

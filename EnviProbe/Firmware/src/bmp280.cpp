@@ -16,6 +16,7 @@ void BMP280::begin(Configuration &config) {
 }
 
 BMP280::Data BMP280::read() {
+    log_d("Reading data");
     return {m_bmp280.readPressure(), m_bmp280.readTemperature()};
 }
 }  // namespace envi_probe

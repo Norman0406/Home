@@ -14,6 +14,7 @@
 const unsigned long LONG_PRESS_SEC = 2;
 const unsigned long VERY_LONG_PRESS_SEC = 15;
 const unsigned int WDT_TIMEOUT_SEC = 10;
+const unsigned int I2C_FREQUENCY = 400000;
 
 #ifdef HAS_DISPLAY
 #include "display.h"
@@ -239,14 +240,15 @@ void setup() {
     neopixelWrite(LED_PIN, 0, 0, 255);
 #endif
 
-    log_i("Initializing I2C");
-    Wire.setPins(I2C_SDA, I2C_SCL);
-
     // configure watchdog timer
     log_i("Configuring watchdog timer with a timeout of %d seconds",
           WDT_TIMEOUT_SEC);
     esp_task_wdt_init(WDT_TIMEOUT_SEC, true);  // enable panic so ESP32 restarts
     esp_task_wdt_add(NULL);  // add current thread to WDT watch
+
+    log_i("Initializing I2C (SDA: %d, SCL: %d, Frq: %d)", I2C_SDA, I2C_SCL,
+          I2C_FREQUENCY);
+    Wire.begin(I2C_SDA, I2C_SCL, I2C_FREQUENCY);
 
     try {
 #ifdef HAS_DISPLAY

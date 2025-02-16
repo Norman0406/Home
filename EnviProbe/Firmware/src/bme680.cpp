@@ -72,6 +72,7 @@ void BME680::setTemperatureOffset(float offset) {
 }
 
 BME680::Data BME680::read() {
+    log_d("Reading data");
     // wait until new data is available
     while (!m_bsec.run()) {
         if (m_bsec.status < BSEC_OK) {

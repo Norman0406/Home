@@ -12,6 +12,7 @@ void Max44009::begin(Configuration &config) {
 }
 
 Max44009::Illuminance Max44009::read() {
+    log_d("Reading data");
     float illuminance = m_max44009.getLux();
 
     int error = m_max44009.getError();
