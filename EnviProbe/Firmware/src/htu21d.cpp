@@ -4,13 +4,13 @@
 
 namespace envi_probe {
 void HTU21D::begin(Configuration &config) {
-    m_config = &config;
+    log_i("Initializing HTU21D");
 
-    m_debugOutput = config.debugOutput();
+    m_config = &config;
 
     m_htu21d.begin();
 
-    Serial.println("HTU21D initialized");
+    log_i("HTU21D initialized");
 }
 
 HTU21D::Data HTU21D::read() {

@@ -41,7 +41,7 @@ Configuration::Configuration() {
 
             save();
         } catch (...) {
-            Serial.println("Unhandled exception, restarting");
+            log_e("Unhandled exception, restarting");
             ESP.restart();
         }
     });
@@ -49,9 +49,7 @@ Configuration::Configuration() {
 }
 
 void Configuration::load() {
-    if (debugOutput()) {
-        Serial.println("Loading configuration");
-    }
+    log_i("Loading configuration from %s", m_configFile.c_str());
 
     try {
         if (!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)) {
@@ -68,9 +66,7 @@ void Configuration::load() {
             throw ConfigException("Config file could not be opened");
         }
 
-        if (debugOutput()) {
-            Serial.println("Opened config file");
-        }
+        log_i("Opened config file");
 
         size_t size = configFile.size();
 
@@ -88,16 +84,14 @@ void Configuration::load() {
         if (!error) {
             JsonObject json = jsonDocument.as<JsonObject>();
 
-            if (debugOutput()) {
-                serializeJson(jsonDocument, Serial);
-                Serial.println();
-            }
+            String serializedJson;
+            serializeJson(jsonDocument, serializedJson);
+            log_i("Json: %s", serializedJson.c_str());
 
             // general data
             m_deviceId = json["device_id"].as<const char*>();
             m_deviceIdParam.setValue(m_deviceId.c_str(),
                                      m_deviceIdParam.getValueLength());
-            m_debugOutput = json["debug_output"].as<bool>();
 
             // MQTT
             m_mqtt.brokerIp = json["mqtt"]["broker_ip"].as<const char*>();
@@ -128,9 +122,8 @@ void Configuration::load() {
 
         configFile.close();
     } catch (const envi_probe::Exception& e) {
-        Serial.println(
-            "Could not open config file, starting configuration portal: " +
-            String(e.what()));
+        log_e("Could not open config file, starting configuration portal: %s",
+              e.what());
         m_wifiManager.startConfigPortal(m_apName.c_str(), NULL);
     }
 
@@ -138,19 +131,14 @@ void Configuration::load() {
         throw ConfigException("Could not connect");
     }
 
-    if (debugOutput()) {
-        Serial.println("Configuration finished");
-    }
+    log_i("Configuration finished");
 }
 
 void Configuration::save() {
-    if (debugOutput()) {
-        Serial.println("Saving configuration");
-    }
+    log_i("Saving configuration to %s", m_configFile.c_str());
 
     JsonDocument jsonDocument = JsonObject();
     jsonDocument["device_id"] = m_deviceId.c_str();
-    jsonDocument["debug_output"] = m_debugOutput;
 
     jsonDocument["mqtt"]["broker_ip"] = m_mqtt.brokerIp.c_str();
     jsonDocument["mqtt"]["broker_port"] = m_mqtt.brokerPort;
@@ -168,29 +156,28 @@ void Configuration::save() {
         throw ConfigException("Failed to open config file for writing");
     }
 
-    if (debugOutput()) {
-        serializeJson(jsonDocument, Serial);
-        Serial.println();
-    }
+    String serializedJson;
+    serializeJson(jsonDocument, serializedJson);
+    log_i("Json: %s", serializedJson.c_str());
 
     serializeJson(jsonDocument, configFile);
     configFile.close();
+
+    log_i("Configuration saved");
 }
 
 void Configuration::clear() {
-    Serial.println("Clearing configuration");
+    log_i("Clearing configuration");
 
     SPIFFS.remove(m_configFile.c_str());
     m_wifiManager.resetSettings();
 
-    Serial.println("Configuration cleared");
+    log_i("Configuration cleared");
 }
 
 uint8_t Configuration::led() const { return LED_BUILTIN; }
 
 std::string Configuration::deviceId() const { return m_deviceId; }
-
-bool Configuration::debugOutput() const { return m_debugOutput; }
 
 const Configuration::MQTT& Configuration::mqtt() const { return m_mqtt; }
 

@@ -4,15 +4,15 @@
 
 namespace envi_probe {
 void BMP280::begin(Configuration &config) {
-    m_config = &config;
+    log_i("Initializing BMP280");
 
-    m_debugOutput = config.debugOutput();
+    m_config = &config;
 
     if (!m_bmp280.begin(BMP280_ADDRESS_ALT)) {
         throw SensorException("Could not initialize BMP280");
     }
 
-    Serial.println("BMP280 initialized");
+    log_i("BMP280 initialized");
 }
 
 BMP280::Data BMP280::read() {

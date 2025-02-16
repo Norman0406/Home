@@ -22,7 +22,6 @@ public:
     Data read();
 
 private:
-    bool m_debugOutput{false};
     SHTSensor m_sht;
 };
 }  // namespace envi_probe

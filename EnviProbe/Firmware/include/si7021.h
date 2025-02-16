@@ -22,7 +22,6 @@ public:
     Data read();
 
 private:
-    bool m_debugOutput{false};
     Configuration *m_config{nullptr};
     Adafruit_Si7021 m_si7021;
 };

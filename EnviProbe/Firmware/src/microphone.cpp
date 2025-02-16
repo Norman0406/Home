@@ -8,15 +8,17 @@
 
 namespace envi_probe {
 void Microphone::begin(Configuration& config) {
-    m_config = &config;
+    log_i("Initializing microphone");
 
-    m_debugOutput = config.debugOutput();
+    m_config = &config;
 
     m_microphone = A0;
 
     analogReadResolution(12);
 
     m_thread = std::thread([this]() { processThread(); });
+
+    log_i("Microphone initialized");
 }
 
 void Microphone::processThread() {

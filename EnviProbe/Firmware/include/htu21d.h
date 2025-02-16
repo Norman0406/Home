@@ -22,7 +22,6 @@ public:
     Data read();
 
 private:
-    bool m_debugOutput{false};
     Configuration *m_config{nullptr};
     ::HTU21D m_htu21d;
 };

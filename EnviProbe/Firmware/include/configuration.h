@@ -28,7 +28,6 @@ public:
     // settings
     uint8_t led() const;
     std::string deviceId() const;
-    bool debugOutput() const;
     const MQTT& mqtt() const;
 #ifdef HAS_DISPLAY
     const Display& display() const;
@@ -38,7 +37,6 @@ private:
     const std::string m_configFile{"/config.json"};
     std::string m_apName;
     std::string m_deviceId{"envi_probe"};
-    bool m_debugOutput{true};
     MQTT m_mqtt;
 #ifdef HAS_DISPLAY
     Display m_display;

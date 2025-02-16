@@ -13,9 +13,7 @@ namespace envi_probe {
 Data::Data(const Configuration &config) : m_config{config} {}
 
 void Data::load() {
-    if (m_config.debugOutput()) {
-        Serial.println("Loading data");
-    }
+    log_i("Loading data from %s", m_dataFile.c_str());
 
     if (!SPIFFS.begin(FORMAT_SPIFFS_IF_FAILED)) {
         throw ConfigException("SPIFFS Mount Failed");
@@ -32,9 +30,7 @@ void Data::load() {
         throw ConfigException("Data file could not be opened");
     }
 
-    if (m_config.debugOutput()) {
-        Serial.println("Opened data file");
-    }
+    log_i("Opened data file");
 
     size_t size = dataFile.size();
 
@@ -52,10 +48,9 @@ void Data::load() {
     if (!error) {
         JsonObject json = jsonDocument.as<JsonObject>();
 
-        if (m_config.debugOutput()) {
-            serializeJson(jsonDocument, Serial);
-            Serial.println();
-        }
+        String serializedJson;
+        serializeJson(jsonDocument, serializedJson);
+        log_i("Json: %s", serializedJson.c_str());
 
 #ifdef HAS_BME680
         JsonArray bsecState = json["bsec_state"].as<JsonArray>();
@@ -69,15 +64,11 @@ void Data::load() {
 
     dataFile.close();
 
-    if (m_config.debugOutput()) {
-        Serial.println("Data loaded");
-    }
+    log_i("Data loaded");
 }
 
 void Data::save() {
-    if (m_config.debugOutput()) {
-        Serial.println("Saving data");
-    }
+    log_i("Saving data to %s", m_dataFile.c_str());
 
     JsonDocument jsonDocument = JsonObject();
 
@@ -93,25 +84,22 @@ void Data::save() {
         throw ConfigException("Failed to open data file for writing");
     }
 
-    if (m_config.debugOutput()) {
-        serializeJson(jsonDocument, Serial);
-        Serial.println();
-    }
+    String serializedJson;
+    serializeJson(jsonDocument, serializedJson);
+    log_i("Json: %s", serializedJson.c_str());
 
     serializeJson(jsonDocument, dataFile);
     dataFile.close();
 
-    if (m_config.debugOutput()) {
-        Serial.println("Data saved");
-    }
+    log_i("Data saved");
 }
 
 void Data::clear() {
-    Serial.println("Clearing data");
+    log_i("Clearing data");
 
     SPIFFS.remove(m_dataFile.c_str());
 
-    Serial.println("Data cleared");
+    log_i("Data cleared");
 }
 
 #ifdef HAS_BME680

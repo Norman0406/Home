@@ -24,20 +24,22 @@ const uint8_t bsec_config_iaq[] = {
 
 namespace envi_probe {
 void BME680::begin(Configuration &config, envi_probe::Data &data) {
-    m_data = &data;
+    log_i("Initializing BME680");
 
-    m_debugOutput = config.debugOutput();
+    m_data = &data;
 
     // initialize BME680
     Wire.begin();
     m_bsec.begin(BME680_I2C_ADDR_SECONDARY, Wire);
     if (m_bsec.status < BSEC_OK) {
+        log_e("BSEC begin() returned status %d", m_bsec.status);
         throw SensorException("Could not initialize BME680: " + m_bsec.status);
     }
 
     // initialize BME680
     m_bsec.setConfig(bsec_config_iaq);
     if (m_bsec.status < BSEC_OK) {
+        log_e("BSEC setConfig() returned status %d", m_bsec.status);
         throw SensorException("Could not apply BME680 config");
     }
 
@@ -61,10 +63,11 @@ void BME680::begin(Configuration &config, envi_probe::Data &data) {
 
     m_bsec.updateSubscription(sensorList, numSensors, BSEC_SAMPLE_RATE_LP);
 
-    Serial.println("BME680 initialized");
+    log_i("BME680 initialized");
 }
 
 void BME680::setTemperatureOffset(float offset) {
+    log_i("Setting temperature offset to %d°", offset);
     m_bsec.setTemperatureOffset(offset);
 }
 
@@ -72,6 +75,7 @@ BME680::Data BME680::read() {
     // wait until new data is available
     while (!m_bsec.run()) {
         if (m_bsec.status < BSEC_OK) {
+            log_e("BSEC run() returned status %d", m_bsec.status);
             throw SensorException("Error reading BME680 data");
         }
     }
@@ -103,6 +107,7 @@ BME680::Data BME680::read() {
 }
 
 void BME680::loadBsecState(envi_probe::Data &data) {
+    log_i("Loading BSEC state");
     const auto &state = data.bsecState();
 
     if (state.size() != BSEC_MAX_STATE_BLOB_SIZE) {
@@ -141,6 +146,7 @@ void BME680::updateBsecState(envi_probe::Data &data) {
     }
 
     if (update) {
+        log_i("Saving BSEC state");
         uint8_t bsecState[BSEC_MAX_STATE_BLOB_SIZE] = {0};
         m_bsec.getState(bsecState);
 

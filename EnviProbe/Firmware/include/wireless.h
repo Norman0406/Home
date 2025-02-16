@@ -24,6 +24,5 @@ private:
 
     IsConnectedHandler m_isConnectedHandler;
     bool m_isConnected{false};
-    bool m_debugOutput{false};
 };
 }  // namespace envi_probe

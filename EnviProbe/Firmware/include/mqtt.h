@@ -58,9 +58,7 @@ public:
             throw NetworkException("Could not publish");
         }
 
-        if (m_debugOutput) {
-            Serial.println("Published " + topicStr + ": " + valueStr);
-        }
+        log_i("Published %s: %s", topicStr.c_str(), valueStr.c_str());
 
         {
             std::lock_guard<std::mutex> lock(m_queueMutex);
@@ -89,7 +87,6 @@ private:
     std::chrono::milliseconds m_timeout{std::chrono::seconds(1)};
     AsyncMqttClient m_mqttClient;
     string m_deviceId;
-    bool m_debugOutput{false};
     bool m_reconnect{false};
     bool m_connected{false};
     bool m_debug{false};

@@ -19,7 +19,6 @@ public:
     Illuminance read();
 
 private:
-    bool m_debugOutput{false};
     Configuration *m_config{nullptr};
     ::Max44009 m_max44009{0x4A};
 };

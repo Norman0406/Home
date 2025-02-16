@@ -22,7 +22,6 @@ public:
     Data read();
 
 private:
-    bool m_debugOutput{false};
     Configuration* m_config{nullptr};
     ClosedCube_HDC1080 m_hdc1080;
 };

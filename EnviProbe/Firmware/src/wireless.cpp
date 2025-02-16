@@ -9,7 +9,7 @@ namespace envi_probe {
 Wireless::Wireless() {}
 
 void Wireless::begin(Configuration &config) {
-    m_debugOutput = config.debugOutput();
+    log_i("Initializing WiFi");
 
     ::WiFi.disconnect();
     ::WiFi.enableSTA(true);
@@ -17,6 +17,8 @@ void Wireless::begin(Configuration &config) {
     delay(500);
 
     ::WiFi.setAutoReconnect(true);
+
+    log_i("WiFi initialized");
 }
 
 void Wireless::onConnected(bool isConnected) {
@@ -27,13 +29,9 @@ void Wireless::onConnected(bool isConnected) {
     m_isConnected = isConnected;
 
     if (isConnected) {
-        if (m_debugOutput) {
-            Serial.println("Wifi connected to " + WiFi.localIP().toString());
-        }
+        log_i("Wifi connected to %s", WiFi.localIP().toString());
     } else {
-        if (m_debugOutput) {
-            Serial.println("Wifi disconnected");
-        }
+        log_i("Wifi disconnected");
     }
 
     m_isConnectedHandler(isConnected);

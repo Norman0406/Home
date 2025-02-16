@@ -22,8 +22,9 @@ MQTT::~MQTT() {
 }
 
 void MQTT::begin(const Configuration& config) {
+    log_i("Initializing MQTT");
+
     m_deviceId = String(config.deviceId().c_str());
-    m_debugOutput = config.debugOutput();
     m_server = String(config.mqtt().brokerIp.c_str());
     m_port = config.mqtt().brokerPort;
 
@@ -31,13 +32,12 @@ void MQTT::begin(const Configuration& config) {
     ipAddress.fromString(config.mqtt().brokerIp.c_str());
 
     m_mqttClient.setServer(ipAddress, config.mqtt().brokerPort);
+
+    log_i("MQTT initialized");
 }
 
 void MQTT::connect() {
-    if (m_debugOutput) {
-        Serial.println("Connecting to MQTT broker at " + m_server + ":" +
-                       m_port);
-    }
+    log_i("Connecting to MQTT broker at %s: %d", m_server, m_port);
 
     m_reconnect = true;
 
@@ -64,10 +64,7 @@ void MQTT::process() {
     std::lock_guard<std::mutex> lock(m_queueMutex);
     for (auto it = m_queuedPacketIds.begin(); it != m_queuedPacketIds.end();) {
         if (now - it->second > m_timeout) {
-            if (m_debugOutput) {
-                Serial.printf("Packet %d has not been acknowledged\n",
-                              it->first);
-            }
+            log_w("Packet %d has not been acknowledged", it->first);
 
             it = m_queuedPacketIds.erase(it);
         } else {
@@ -77,9 +74,7 @@ void MQTT::process() {
 }
 
 void MQTT::onConnected(bool sessionPresent) {
-    if (m_debugOutput) {
-        Serial.println("MQTT client connected");
-    }
+    log_i("MQTT client connected");
 
     m_connected = true;
 }
@@ -87,9 +82,8 @@ void MQTT::onConnected(bool sessionPresent) {
 void MQTT::connectToMqttStatic(MQTT* pThis) { pThis->m_mqttClient.connect(); }
 
 void MQTT::onDisconnected(AsyncMqttClientDisconnectReason reason) {
-    if (m_debugOutput && m_connected) {
-        Serial.printf("MQTT client disconnected: %d\n",
-                      static_cast<int8_t>(reason));
+    if (m_connected) {
+        log_i("MQTT client disconnected: %d", static_cast<int8_t>(reason));
     }
 
     m_connected = false;
@@ -103,8 +97,8 @@ void MQTT::onPublished(uint16_t packetId) {
     std::lock_guard<std::mutex> lock(m_queueMutex);
     if (m_queuedPacketIds.count(packetId)) {
         m_queuedPacketIds.erase(packetId);
-    } else if (m_debugOutput) {
-        Serial.printf("Unknown packet acknowledged: %d\n", packetId);
+    } else {
+        log_w("Unknown packet acknowledged: %d", packetId);
     }
 }
 }  // namespace envi_probe

@@ -25,7 +25,6 @@ public:
 private:
     void processThread();
 
-    bool m_debugOutput{false};
     Configuration *m_config{nullptr};
     uint8_t m_microphone;
     std::thread m_thread;

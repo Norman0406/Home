@@ -45,7 +45,6 @@ private:
     void loadBsecState(envi_probe::Data &config);
     void updateBsecState(envi_probe::Data &config);
 
-    bool m_debugOutput{false};
     envi_probe::Data *m_data{nullptr};
     Bsec m_bsec;
     uint16_t m_stateUpdateCounter;

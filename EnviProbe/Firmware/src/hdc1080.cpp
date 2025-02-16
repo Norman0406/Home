@@ -4,17 +4,19 @@
 
 namespace envi_probe {
 void HDC1080::begin(Configuration &config) {
-    m_config = &config;
+    log_i("Initializing HDC1080");
 
-    m_debugOutput = config.debugOutput();
+    m_config = &config;
 
     m_hdc1080.begin(0x40);
 
     auto serialNumber = m_hdc1080.readSerialNumber();
 
-    Serial.printf("HDC1080 S/N: %d-%d-%d, Device Id: %d\n",
-                  serialNumber.serialFirst, serialNumber.serialMid,
-                  serialNumber.serialLast, m_hdc1080.readDeviceId());
+    log_i("HDC1080 S/N: %d-%d-%d, Device Id: %d\n", serialNumber.serialFirst,
+          serialNumber.serialMid, serialNumber.serialLast,
+          m_hdc1080.readDeviceId());
+
+    log_i("HDC1080 initialized")
 }
 
 HDC1080::Data HDC1080::read() {

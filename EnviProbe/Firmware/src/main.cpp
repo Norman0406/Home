@@ -150,9 +150,10 @@ void bootBtnPressed() {
     attachInterrupt(digitalPinToInterrupt(BOOT_BUTTON), bootBtnReleased,
                     RISING);
 
-    Serial.println("Boot button pressed. Press >" + String(LONG_PRESS_SEC) +
-                   "s for config reset, >" + String(VERY_LONG_PRESS_SEC) +
-                   "s for config and data reset.");
+    log_i(
+        "Boot button pressed. Press >%ds s for config reset, >%ds for config "
+        "and data reset.",
+        LONG_PRESS_SEC, VERY_LONG_PRESS_SEC);
 
     // capture current time
     bootBtnPressedTime = millis();
@@ -163,7 +164,7 @@ void bootBtnReleased() {
     attachInterrupt(digitalPinToInterrupt(BOOT_BUTTON), bootBtnPressed,
                     FALLING);
 
-    Serial.println("Boot button released");
+    log_i("Boot button released");
 
     unsigned long bootBtnReleasedTime = millis();
     auto pressDuration = bootBtnReleasedTime - bootBtnPressedTime;
@@ -197,6 +198,7 @@ void bootBtnReleased() {
 }
 
 void setupBootButton() {
+    log_i("Setting up boot button");
     pinMode(BOOT_BUTTON, INPUT);
 
     // configure the boot button to format the internal storage on a long button
@@ -208,8 +210,15 @@ void setupBootButton() {
 void setup() {
     Serial.begin(115200);
 
-    // Allow some time for the serial monitor to connect
     delay(1000);
+
+    log_i("===============================================");
+    log_i("SDK: %s", ESP.getSdkVersion());
+    log_i("Chip Revision: %d", ESP.getChipRevision());
+    log_i("Flash Size: %d kB", ESP.getFlashChipSize() / 1024.0f);
+    log_i("Sketch Size: %d kB / %d kB", ESP.getSketchSize() / 1024.0f,
+          ESP.getFreeSketchSpace() / 1024.0f);
+    log_i("===============================================");
 
     setupBootButton();
 
@@ -230,24 +239,12 @@ void setup() {
     neopixelWrite(LED_PIN, 0, 0, 255);
 #endif
 
+    log_i("Initializing I2C");
     Wire.setPins(I2C_SDA, I2C_SCL);
 
-    if (config.debugOutput()) {
-        Serial.println();
-        Serial.println("===============================================");
-        Serial.println("SDK: " + String(ESP.getSdkVersion()));
-        Serial.println("Chip Revision: " + String(ESP.getChipRevision()));
-        Serial.println(
-            "Flash Size: " + String(ESP.getFlashChipSize() / 1024.0f) + " kB");
-        Serial.println("Sketch Size: " + String(ESP.getSketchSize() / 1024.0f) +
-                       " kb / " + String(ESP.getFreeSketchSpace() / 1024.0f) +
-                       " kb");
-        Serial.println("===============================================");
-    }
-
     // configure watchdog timer
-    Serial.println("Configuring watchdog timer with a timeout of " +
-                   String(WDT_TIMEOUT_SEC) + " seconds");
+    log_i("Configuring watchdog timer with a timeout of %d seconds",
+          WDT_TIMEOUT_SEC);
     esp_task_wdt_init(WDT_TIMEOUT_SEC, true);  // enable panic so ESP32 restarts
     esp_task_wdt_add(NULL);  // add current thread to WDT watch
 
@@ -331,17 +328,13 @@ void setup() {
         // happens in a different thread
         processThread = std::thread(process);
 
-        if (config.debugOutput()) {
-            Serial.println("Setup finished");
-        }
-
         // initialization phase is over
 #ifdef HAS_DISPLAY
         display.setError(false);
         display.setActive(false);
 #endif
     } catch (const envi_probe::Exception &e) {
-        Serial.println("Exception: " + String(e.what()));
+        log_e("Exception: %s", e.what());
 
 #ifdef HAS_NEOPIXEL_LED
         neopixelWrite(LED_PIN, 0, 255, 0);
@@ -362,6 +355,8 @@ void setup() {
 #ifdef HAS_NEOPIXEL_LED
     neopixelWrite(LED_PIN, 0, 0, 0);
 #endif
+
+    log_i("Setup finished");
 }
 
 #ifdef HAS_BME680
@@ -374,6 +369,7 @@ void loop() {
             return;
         }
 
+        log_d("Resetting watchdog timer");
         esp_task_wdt_reset();
 
 #ifdef HAS_BME680
@@ -465,9 +461,7 @@ void loop() {
         unsigned long timeSinceLastSend = millis() - lastSendTime;
         if (timeSinceLastSend > config.mqtt().sendTimeSeconds * 1e3 &&
             wireless.isConnected() && mqtt.isConnected()) {
-            if (config.debugOutput()) {
-                Serial.println("Publishing data");
-            }
+            log_i("Publishing data");
 
 #ifdef HAS_LED
             digitalWrite(LED_PIN, HIGH);
@@ -549,7 +543,7 @@ void loop() {
             lastSendTime = millis();
         }
     } catch (const envi_probe::Exception &e) {
-        Serial.println("Exception: " + String(e.what()));
+        log_e("Exception: %s", e.what());
 
 #ifdef HAS_NEOPIXEL_LED
         neopixelWrite(LED_PIN, 0, 255, 0);
@@ -561,7 +555,7 @@ void loop() {
 
         delay(1000);
     } catch (...) {
-        Serial.println("Unknown exception");
+        log_e("Unknown exception");
 
 #ifdef HAS_NEOPIXEL_LED
         neopixelWrite(LED_PIN, 0, 255, 0);

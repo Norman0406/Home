@@ -4,9 +4,7 @@
 
 namespace envi_probe {
 void SHT::begin(Configuration &config) {
-    Serial.println("Initializing SHT sensor");
-
-    m_debugOutput = config.debugOutput();
+    log_i("Initializing SHT sensor");
 
     if (!m_sht.init()) {
         throw SensorException("Could not initialize SHT sensor");
@@ -14,7 +12,7 @@ void SHT::begin(Configuration &config) {
 
     m_sht.setAccuracy(SHTSensor::SHT_ACCURACY_HIGH);
 
-    Serial.println("SHT sensor initialized");
+    log_i("SHT sensor initialized");
 }
 
 SHT::Data SHT::read() {
