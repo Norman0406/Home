@@ -33,6 +33,11 @@ String to_string(uint8_t value) {
 }
 
 template <>
+String to_string(long unsigned int value) {
+    return String(value);
+}
+
+template <>
 String to_string(int value) {
     return String(value);
 }

@@ -13,7 +13,7 @@
 #define BOOT_BUTTON 0
 const unsigned long LONG_PRESS_SEC = 2;
 const unsigned long VERY_LONG_PRESS_SEC = 15;
-const unsigned int WDT_TIMEOUT_SEC = 10;
+const unsigned int WDT_TIMEOUT_SEC = 30;
 const unsigned int I2C_FREQUENCY = 400000;
 
 #ifdef HAS_DISPLAY
@@ -22,6 +22,7 @@ const unsigned int I2C_FREQUENCY = 400000;
 
 #ifdef HAS_NEOPIXEL_LED
 #define LED_PIN 21
+#define LED_BRIGHTNESS 0.1
 #endif
 
 #ifdef HAS_LED
@@ -102,6 +103,24 @@ std::thread processThread;
 
 unsigned long lastSendTime = 0;
 
+void setLed(float red_val, float green_val, float blue_val) {
+#ifdef HAS_LED
+    if (red_val > 0.5f || green_val > 0.5f || blue_val > 0.5f) {
+        digitalWrite(LED_PIN, HIGH);
+    } else {
+        digitalWrite(LED_PIN, LOW);
+    }
+#endif
+#ifdef HAS_NEOPIXEL_LED
+    red_val *= LED_BRIGHTNESS;
+    green_val *= LED_BRIGHTNESS;
+    blue_val *= LED_BRIGHTNESS;
+    neopixelWrite(LED_PIN, static_cast<uint8_t>(green_val * 255.0f),
+                  static_cast<uint8_t>(red_val * 255.0f),
+                  static_cast<uint8_t>(blue_val * 255.0f));
+#endif
+}
+
 void process() {
     while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -175,24 +194,16 @@ void bootBtnReleased() {
         resetRequested = true;
         std::thread([pressDuration, config{std::reference_wrapper(config)},
                      data{std::reference_wrapper(data)}]() mutable {
-#ifdef HAS_LED
-            digitalWrite(LED_PIN, HIGH);
-#endif
-#ifdef HAS_NEOPIXEL_LED
-            neopixelWrite(LED_PIN, 0, 255, 0);
-#endif
+            setLed(1, 0, 0);
+
             // clear config on normal long press
             config.get().clear();
             if (pressDuration > VERY_LONG_PRESS_SEC * 1e3) {
                 // clear data on very long press
                 data.get().clear();
             }
-#ifdef HAS_LED
-            digitalWrite(LED_PIN, LOW);
-#endif
-#ifdef HAS_NEOPIXEL_LED
-            neopixelWrite(LED_PIN, 0, 0, 0);
-#endif
+
+            setLed(0, 0, 0);
             ESP.restart();
         }).detach();
     }
@@ -231,20 +242,11 @@ void setup() {
 
 #ifdef HAS_LED
     pinMode(LED_PIN, OUTPUT);
-    digitalWrite(LED_PIN, HIGH);
 #endif
 
     delay(5000);
 
-#ifdef HAS_NEOPIXEL_LED
-    neopixelWrite(LED_PIN, 0, 0, 255);
-#endif
-
-    // configure watchdog timer
-    log_i("Configuring watchdog timer with a timeout of %d seconds",
-          WDT_TIMEOUT_SEC);
-    esp_task_wdt_init(WDT_TIMEOUT_SEC, true);  // enable panic so ESP32 restarts
-    esp_task_wdt_add(NULL);  // add current thread to WDT watch
+    setLed(0, 0, 1);
 
     log_i("Initializing I2C (SDA: %d, SCL: %d, Frq: %d)", I2C_SDA, I2C_SCL,
           I2C_FREQUENCY);
@@ -293,6 +295,13 @@ void setup() {
 
         wireless.begin(config);
 
+        // configure watchdog timer
+        log_i("Configuring watchdog timer with a timeout of %d seconds",
+              WDT_TIMEOUT_SEC);
+        esp_task_wdt_init(WDT_TIMEOUT_SEC,
+                          true);  // enable panic so ESP32 restarts
+        esp_task_wdt_add(NULL);   // add current thread to WDT watch
+
         // initialize sensors
 #ifdef HAS_BME680
         bme680.begin(config, data);
@@ -338,9 +347,7 @@ void setup() {
     } catch (const envi_probe::Exception &e) {
         log_e("Exception: %s", e.what());
 
-#ifdef HAS_NEOPIXEL_LED
-        neopixelWrite(LED_PIN, 0, 255, 0);
-#endif
+        setLed(1, 0, 0);
 
 #ifdef HAS_DISPLAY
         display.setError(true);
@@ -350,13 +357,7 @@ void setup() {
         ESP.restart();
     }
 
-#ifdef HAS_LED
-    digitalWrite(LED_PIN, LOW);
-#endif
-
-#ifdef HAS_NEOPIXEL_LED
-    neopixelWrite(LED_PIN, 0, 0, 0);
-#endif
+    setLed(0, 0, 0);
 
     log_i("Setup finished");
 }
@@ -435,47 +436,26 @@ void loop() {
         microphoneData = microphone.read();
 #endif
 
-#ifdef HAS_LED
-        if (!wireless.isConnected() || !mqtt.isConnected()) {
-            digitalWrite(LED_PIN, HIGH);
-        } else {
-            digitalWrite(LED_PIN, LOW);
-        }
-#endif
-
-#ifdef HAS_NEOPIXEL_LED
-        uint8_t red = 0;
-        uint8_t green = 0;
-        uint8_t blue = 0;
-
         if (!wireless.isConnected()) {
-            red = 255;
-            green = 255;
+            setLed(1, 1, 0);
         } else if (!mqtt.isConnected()) {
-            red = 255;
-            blue = 255;
+            setLed(1, 0, 1);
         }
-
-        neopixelWrite(LED_PIN, green, red, blue);
-#endif
 
         // send data out every now and then
         unsigned long timeSinceLastSend = millis() - lastSendTime;
         if (timeSinceLastSend > config.mqtt().sendTimeSeconds * 1e3 &&
             wireless.isConnected() && mqtt.isConnected()) {
+            lastSendTime = millis();
             log_d("Publishing data");
 
-#ifdef HAS_LED
-            digitalWrite(LED_PIN, HIGH);
-#endif
-
-#ifdef HAS_NEOPIXEL_LED
-            neopixelWrite(LED_PIN, 50, 0, 0);
-#endif
+            setLed(0, 1, 0);
 
 #ifdef HAS_DISPLAY
             display.setActive(true);
 #endif
+
+            mqtt.publish("time", lastSendTime);
 
 #ifdef HAS_BME680
             mqtt.publish("bme680/iaq", bme680Data.iaq);
@@ -541,15 +521,11 @@ void loop() {
 #ifdef HAS_DISPLAY
             display.setActive(false);
 #endif
-
-            lastSendTime = millis();
         }
     } catch (const envi_probe::Exception &e) {
         log_e("Exception: %s", e.what());
 
-#ifdef HAS_NEOPIXEL_LED
-        neopixelWrite(LED_PIN, 0, 255, 0);
-#endif
+        setLed(1, 0, 0);
 
 #ifdef HAS_DISPLAY
         display.setError(true);
@@ -559,9 +535,7 @@ void loop() {
     } catch (...) {
         log_e("Unknown exception");
 
-#ifdef HAS_NEOPIXEL_LED
-        neopixelWrite(LED_PIN, 0, 255, 0);
-#endif
+        setLed(1, 0, 0);
 
 #ifdef HAS_DISPLAY
         display.setError(true);
@@ -569,12 +543,9 @@ void loop() {
         delay(1000);
     }
 
-#ifdef HAS_LED
-    digitalWrite(LED_PIN, LOW);
-#endif
+    setLed(0, 0, 0);
 
 #ifdef HAS_NEOPIXEL_LED
-    neopixelWrite(LED_PIN, 0, 0, 0);
     delay(20);
 #endif
 
