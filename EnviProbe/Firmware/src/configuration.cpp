@@ -26,9 +26,11 @@ Configuration::Configuration() {
     m_wifiManager.addParameter(&m_displayUpdateTime);
     m_wifiManager.addParameter(&m_displayRefreshTime);
 #endif
+    m_wifiManager.addParameter(&m_ledEnabledParam);
     m_wifiManager.setSaveParamsCallback([this] {
         try {
             m_deviceId = m_deviceIdParam.getValue();
+            m_ledEnabled = (strncmp(m_ledEnabledParam.getValue(), "T", 1) == 0);
             m_mqtt.brokerIp = m_brokerIpParam.getValue();
             m_mqtt.brokerPort = std::stoi(m_brokerPortParam.getValue());
             m_mqtt.sendTimeSeconds = std::stoi(m_sendTimeParam.getValue());
@@ -93,6 +95,13 @@ void Configuration::load() {
             m_deviceIdParam.setValue(m_deviceId.c_str(),
                                      m_deviceIdParam.getValueLength());
 
+            m_ledEnabled = json["led_enabled"].as<bool>();
+            if (m_ledEnabled) {
+                m_ledEnabledParam.setValue("T", 1);
+            } else {
+                m_ledEnabledParam.setValue("", 0);
+            }
+
             // MQTT
             m_mqtt.brokerIp = json["mqtt"]["broker_ip"].as<const char*>();
             m_brokerIpParam.setValue(m_mqtt.brokerIp.c_str(),
@@ -139,6 +148,7 @@ void Configuration::save() {
 
     JsonDocument jsonDocument = JsonObject();
     jsonDocument["device_id"] = m_deviceId.c_str();
+    jsonDocument["led_enabled"] = m_ledEnabled;
 
     jsonDocument["mqtt"]["broker_ip"] = m_mqtt.brokerIp.c_str();
     jsonDocument["mqtt"]["broker_port"] = m_mqtt.brokerPort;
@@ -175,9 +185,9 @@ void Configuration::clear() {
     log_i("Configuration cleared");
 }
 
-uint8_t Configuration::led() const { return LED_BUILTIN; }
-
 std::string Configuration::deviceId() const { return m_deviceId; }
+
+bool Configuration::ledEnabled() const { return m_ledEnabled; }
 
 const Configuration::MQTT& Configuration::mqtt() const { return m_mqtt; }
 

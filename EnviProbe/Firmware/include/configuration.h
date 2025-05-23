@@ -26,8 +26,8 @@ public:
     };
 
     // settings
-    uint8_t led() const;
     std::string deviceId() const;
+    bool ledEnabled() const;
     const MQTT& mqtt() const;
 #ifdef HAS_DISPLAY
     const Display& display() const;
@@ -37,6 +37,7 @@ private:
     const std::string m_configFile{"/config.json"};
     std::string m_apName;
     std::string m_deviceId{"envi_probe"};
+    bool m_ledEnabled{true};
     MQTT m_mqtt;
 #ifdef HAS_DISPLAY
     Display m_display;
@@ -61,5 +62,12 @@ private:
         "display_refresh_time", "Display refresh time (seconds)",
         std::to_string(m_display.refreshTimeSeconds).c_str(), 4};
 #endif
+    WiFiManagerParameter m_ledEnabledParam{
+        "led_enabled",
+        "LED enabled",
+        "T",
+        2,
+        "input type='checkbox' id='led_enabled' name='led_enabled' checked",
+        WFM_LABEL_AFTER};
 };
 }  // namespace envi_probe

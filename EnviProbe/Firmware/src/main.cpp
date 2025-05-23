@@ -10,6 +10,8 @@
 #include "mqtt.h"
 #include "wireless.h"
 
+SET_LOOP_TASK_STACK_SIZE(16 * 1024);  // 16KB
+
 #define BOOT_BUTTON 0
 const unsigned long LONG_PRESS_SEC = 2;
 const unsigned long VERY_LONG_PRESS_SEC = 15;
@@ -103,7 +105,12 @@ std::thread processThread;
 
 unsigned long lastSendTime = 0;
 
-void setLed(float red_val, float green_val, float blue_val) {
+void setLed(float red_val, float green_val, float blue_val,
+            bool override = false) {
+    if (!config.ledEnabled() && !override) {
+        return;
+    }
+
 #ifdef HAS_LED
     if (red_val > 0.5f || green_val > 0.5f || blue_val > 0.5f) {
         digitalWrite(LED_PIN, HIGH);
@@ -226,10 +233,11 @@ void setup() {
 
     log_i("===============================================");
     log_i("SDK: %s", ESP.getSdkVersion());
-    log_i("Chip Revision: %d", ESP.getChipRevision());
-    log_i("Flash Size: %d kB", ESP.getFlashChipSize() / 1024.0f);
-    log_i("Sketch Size: %d kB / %d kB", ESP.getSketchSize() / 1024.0f,
+    log_i("Chip Revision: %u", ESP.getChipRevision());
+    log_i("Flash Size: %.2f kB", ESP.getFlashChipSize() / 1024.0f);
+    log_i("Sketch Size: %.2f kB / %.2f kB", ESP.getSketchSize() / 1024.0f,
           ESP.getFreeSketchSpace() / 1024.0f);
+    log_i("Stack size: %.2f kB", getArduinoLoopTaskStackSize() / 1024.0f);
     log_i("===============================================");
 
     setupBootButton();
@@ -357,7 +365,7 @@ void setup() {
         ESP.restart();
     }
 
-    setLed(0, 0, 0);
+    setLed(0, 0, 0, true);
 
     log_i("Setup finished");
 }
