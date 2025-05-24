@@ -81,7 +81,7 @@ void MQTT::onConnected(bool sessionPresent) {
 
 void MQTT::connectToMqttStatic(MQTT* pThis) { pThis->m_mqttClient.connect(); }
 
-void MQTT::onDisconnected(AsyncMqttClientDisconnectReason reason) {
+void MQTT::onDisconnected(espMqttClientTypes::DisconnectReason reason) {
     if (m_connected) {
         log_i("MQTT client disconnected: %d", static_cast<int8_t>(reason));
     }

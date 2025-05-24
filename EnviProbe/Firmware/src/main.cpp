@@ -16,7 +16,7 @@ SET_LOOP_TASK_STACK_SIZE(16 * 1024);  // 16KB
 const unsigned long LONG_PRESS_SEC = 2;
 const unsigned long VERY_LONG_PRESS_SEC = 15;
 const unsigned int WDT_TIMEOUT_SEC = 30;
-const unsigned int I2C_FREQUENCY = 400000;
+const unsigned int I2C_FREQUENCY = 200000;
 
 #ifdef HAS_DISPLAY
 #include "display.h"

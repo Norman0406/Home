@@ -1,8 +1,8 @@
 #pragma once
 
 #include <Arduino.h>
-#include <AsyncMqttClient.h>
 #include <Ticker.h>
+#include <espMqttClientAsync.h>
 
 #include <chrono>
 #include <mutex>
@@ -82,7 +82,7 @@ public:
 
 private:
     void onConnected(bool sessionPresent);
-    void onDisconnected(AsyncMqttClientDisconnectReason reason);
+    void onDisconnected(espMqttClientTypes::DisconnectReason reason);
     void onPublished(uint16_t packetId);
     static void connectToMqttStatic(MQTT *pThis);
 
@@ -90,7 +90,7 @@ private:
     std::unordered_map<uint16_t, std::chrono::system_clock::time_point>
         m_queuedPacketIds;
     std::chrono::milliseconds m_timeout{std::chrono::seconds(1)};
-    AsyncMqttClient m_mqttClient;
+    espMqttClientAsync m_mqttClient;
     string m_deviceId;
     bool m_reconnect{false};
     bool m_connected{false};
